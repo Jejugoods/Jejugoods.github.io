@@ -27,6 +27,7 @@ const BASE_FPS = 60;
 
 // Current Scaled Constants
 let GRAVITY, JUMP_FORCE, MOVEMENT_SPEED, PLATFORM_WIDTH, PLATFORM_HEIGHT, PLATFORM_GAP_MIN, PLATFORM_GAP_MAX;
+let gameWidth, gameHeight; // Logical dimensions for drawing and logic
 
 // Assets Tracking
 const assets = {
@@ -144,8 +145,8 @@ class Player {
     constructor() {
         this.width = 135 * scaleFactor;
         this.height = 135 * scaleFactor;
-        this.x = canvas.width / 2 - this.width / 2;
-        this.y = canvas.height - 150 * scaleFactor;
+        this.x = gameWidth / 2 - this.width / 2;
+        this.y = gameHeight - 150 * scaleFactor;
         this.vx = 0;
         this.vy = 0;
         this.facingRight = true;
@@ -230,15 +231,15 @@ class Player {
         this.scaleY += (1 - this.scaleY) * 0.1 * dtScalar;
 
         // Floor collision (only for start)
-        if (this.y + this.height > canvas.height && score === 0) {
-            this.y = canvas.height - this.height;
+        if (this.y + this.height > gameHeight && score === 0) {
+            this.y = gameHeight - this.height;
             this.vy = 0;
             this.jump(); // Auto jump on start
         }
 
         // Screen Boundaries (Walls)
         if (this.x < 0) this.x = 0;
-        if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+        if (this.x + this.width > gameWidth) this.x = gameWidth - this.width;
     }
 
     jump() {
@@ -353,7 +354,7 @@ class Platform {
     update(dtScalar) {
         if (this.type === 'moving') {
             this.x += this.vx * dtScalar;
-            if (this.x < 0 || this.x + this.width > canvas.width) {
+            if (this.x < 0 || this.x + this.width > gameWidth) {
                 this.vx *= -1;
             }
         }
@@ -428,18 +429,18 @@ function createBurstParticles(x, y, color) {
 // Background Drawing
 function drawBackground() {
     if (backgroundImg.complete) {
-        // Just fill screen, covering nicely
-        const scale = Math.max(canvas.width / backgroundImg.width, canvas.height / backgroundImg.height);
-        const x = (canvas.width / 2) - (backgroundImg.width / 2) * scale;
-        const y = (canvas.height / 2) - (backgroundImg.height / 2) * scale;
+        // Use logical dimensions for scaling/positioning
+        const scale = Math.max(gameWidth / backgroundImg.width, gameHeight / backgroundImg.height);
+        const x = (gameWidth / 2) - (backgroundImg.width / 2) * scale;
+        const y = (gameHeight / 2) - (backgroundImg.height / 2) * scale;
         ctx.drawImage(backgroundImg, x, y, backgroundImg.width * scale, backgroundImg.height * scale);
     } else {
         // Fallback Gradient
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        const gradient = ctx.createLinearGradient(0, 0, 0, gameHeight);
         gradient.addColorStop(0, '#0984e3'); // Deep Blue
         gradient.addColorStop(1, '#74b9ff'); // Light Blue
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, gameWidth, gameHeight);
     }
 }
 
@@ -453,7 +454,7 @@ function drawUI() {
     const drawEffectBox = (title, desc, color, y) => {
         const boxWidth = 220;
         const boxHeight = 50;
-        const x = canvas.width - 10;
+        const x = gameWidth - 10;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.beginPath();
@@ -497,28 +498,28 @@ function drawUI() {
 // Game Logic
 let player = new Player();
 
-function initGame() {
+function updateCanvasSize() {
     const dpr = window.devicePixelRatio || 1;
     const cssWidth = window.innerWidth > 480 ? 480 : window.innerWidth;
     const cssHeight = window.innerHeight;
 
-    // Set physical resolution
-    canvas.width = cssWidth * dpr;
-    canvas.height = cssHeight * dpr;
+    gameWidth = cssWidth;
+    gameHeight = cssHeight;
 
-    // Set CSS display size
-    canvas.style.width = cssWidth + 'px';
-    canvas.style.height = cssHeight + 'px';
+    // Physical resolution
+    canvas.width = gameWidth * dpr;
+    canvas.height = gameHeight * dpr;
 
     // Scale context to work with logical units
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
     ctx.scale(dpr, dpr);
 
-    // Ensure high-quality image smoothing
+    // Image smoothing
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // Update Scale Factor based on width
-    scaleFactor = cssWidth / LOGICAL_WIDTH;
+    // Update global scale factor for sprites
+    scaleFactor = gameWidth / LOGICAL_WIDTH;
 
     // Update Scaled Constants
     GRAVITY = BASE_GRAVITY * scaleFactor;
@@ -528,6 +529,10 @@ function initGame() {
     PLATFORM_HEIGHT = BASE_PLATFORM_HEIGHT * scaleFactor;
     PLATFORM_GAP_MIN = BASE_PLATFORM_GAP_MIN * scaleFactor;
     PLATFORM_GAP_MAX = BASE_PLATFORM_GAP_MAX * scaleFactor;
+}
+
+function initGame() {
+    updateCanvasSize();
 
     player = new Player();
     platforms = [];
@@ -546,16 +551,16 @@ function initGame() {
     };
 
     // Create initial platforms
-    let y = canvas.height - 100;
+    let y = gameHeight - 100;
     while (y > 0) {
         let x;
         // Keep initial clouds centered to avoid hint arrows
         const sideMargin = 100;
-        const availableWidth = canvas.width - (sideMargin * 2) - PLATFORM_WIDTH;
+        const availableWidth = gameWidth - (sideMargin * 2) - PLATFORM_WIDTH;
         if (availableWidth > 0) {
             x = sideMargin + Math.random() * availableWidth;
         } else {
-            x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+            x = Math.random() * (gameWidth - PLATFORM_WIDTH);
         }
 
         platforms.push(new Platform(x, y));
@@ -606,7 +611,7 @@ function update(timestamp) {
     }
 
     // Clear & Draw Background
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, gameWidth, gameHeight);
     drawBackground();
 
     // Decrement Effect Timers
@@ -628,8 +633,8 @@ function update(timestamp) {
     player.draw();
 
     // Move Camera (Scroll platforms down if player goes up high)
-    if (player.y < canvas.height / 2) {
-        let deltaY = canvas.height / 2 - player.y;
+    if (player.y < gameHeight / 2) {
+        let deltaY = gameHeight / 2 - player.y;
         player.y += deltaY; // Keep player fixed relative to screen
 
         platforms.forEach(p => {
@@ -665,7 +670,7 @@ function update(timestamp) {
         }
 
         // Remove platforms below screen
-        if (p.y > canvas.height) {
+        if (p.y > gameHeight) {
             platforms.splice(index, 1);
         }
     });
@@ -687,7 +692,7 @@ function update(timestamp) {
         }
 
         // Remove items below screen
-        if (item.y > canvas.height) {
+        if (item.y > gameHeight) {
             items.splice(index, 1);
         }
     });
@@ -700,14 +705,14 @@ function update(timestamp) {
         // If arrows are showing, keep clouds in the center to avoid overlap
         if (hintTimer > 0) {
             const sideMargin = 100 * scaleFactor;
-            const availableWidth = canvas.width - (sideMargin * 2) - PLATFORM_WIDTH;
+            const availableWidth = gameWidth - (sideMargin * 2) - PLATFORM_WIDTH;
             if (availableWidth > 0) {
                 x = sideMargin + Math.random() * availableWidth;
             } else {
-                x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+                x = Math.random() * (gameWidth - PLATFORM_WIDTH);
             }
         } else {
-            x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+            x = Math.random() * (gameWidth - PLATFORM_WIDTH);
         }
 
         platforms.push(new Platform(x, y));
@@ -730,7 +735,7 @@ function update(timestamp) {
     drawUI();
 
     // Game Over Check
-    if (player.y > canvas.height) {
+    if (player.y > gameHeight) {
         gameOver('fall');
     } else if (gameTimer <= 0) {
         gameOver('timeout');
@@ -769,39 +774,14 @@ restartBtn.addEventListener('click', startGame);
 
 // Handle resize
 window.addEventListener('resize', () => {
-    const dpr = window.devicePixelRatio || 1;
-    const cssWidth = window.innerWidth > 480 ? 480 : window.innerWidth;
-    const cssHeight = window.innerHeight;
-
-    canvas.width = cssWidth * dpr;
-    canvas.height = cssHeight * dpr;
-    canvas.style.width = cssWidth + 'px';
-    canvas.style.height = cssHeight + 'px';
-    ctx.scale(dpr, dpr);
-
-    // Maintain smoothing settings
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
+    updateCanvasSize();
     if (gameState === 'MENU') drawBackground();
 });
 
 // Initial Setup
-const initialDpr = window.devicePixelRatio || 1;
-const initialCssWidth = window.innerWidth > 480 ? 480 : window.innerWidth;
-const initialCssHeight = window.innerHeight;
-
-canvas.width = initialCssWidth * initialDpr;
-canvas.height = initialCssHeight * initialDpr;
-canvas.style.width = initialCssWidth + 'px';
-canvas.style.height = initialCssHeight + 'px';
-ctx.scale(initialDpr, initialDpr);
-
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = 'high';
+updateCanvasSize();
 
 // Draw generic background on load
 backgroundImg.onload = () => {
-    backgroundLoaded = true; // Use common flag or just check complete
     if (gameState === 'MENU') drawBackground();
 };
