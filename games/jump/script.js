@@ -17,8 +17,13 @@ const PLATFORM_GAP_MIN = 50; // Balanced gap
 const PLATFORM_GAP_MAX = 110;
 
 // Assets
-const tigerImg = new Image();
-tigerImg.src = 'assets/tiger.png';
+const tigerIdleImg = new Image();
+tigerIdleImg.src = 'assets/tiger_idle.png';
+const tigerJumpImg = new Image();
+tigerJumpImg.src = 'assets/tiger_jump.png';
+const tigerFallImg = new Image();
+tigerFallImg.src = 'assets/tiger_fail.png'; // User named it tiger_fail.png
+
 const platformImg = new Image();
 platformImg.src = 'assets/platform.png';
 const backgroundImg = new Image();
@@ -66,11 +71,11 @@ window.addEventListener('touchend', () => {
     keys.ArrowRight = false;
 });
 
-// Player Class (White Tiger - Image Based)
+// Player Class (White Tiger - Animated Sprite)
 class Player {
     constructor() {
-        this.width = 60; // Standard size for sprite
-        this.height = 60;
+        this.width = 90; // Increased from 60 based on user feedback
+        this.height = 90;
         this.x = canvas.width / 2 - this.width / 2;
         this.y = canvas.height - 150;
         this.vx = 0;
@@ -91,9 +96,18 @@ class Player {
         ctx.translate(centerX, centerY);
         if (!this.facingRight) ctx.scale(-1, 1);
 
+        // Determine Sprite based on state
+        let spriteToDraw = tigerIdleImg; // Default Idle
+
+        if (this.vy < -0.5) {
+            spriteToDraw = tigerJumpImg; // Jumping up
+        } else if (this.vy > 0.5) {
+            spriteToDraw = tigerFallImg; // Falling down
+        }
+
         // Draw Image
-        if (tigerImg.complete) {
-            ctx.drawImage(tigerImg, -this.width / 2, -this.height / 2, this.width, this.height);
+        if (spriteToDraw.complete) {
+            ctx.drawImage(spriteToDraw, -this.width / 2, -this.height / 2, this.width, this.height);
         } else {
             // Fallback
             ctx.fillStyle = 'white';
