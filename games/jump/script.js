@@ -4,6 +4,8 @@ const scoreElement = document.getElementById('score');
 const timerElement = document.getElementById('timer');
 const finalScoreElement = document.getElementById('final-score');
 const totalPlaysElement = document.getElementById('total-plays');
+const userSequenceInfo = document.getElementById('user-sequence-info');
+const userSequenceNum = document.getElementById('user-sequence-num');
 const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const startBtn = document.getElementById('start-btn');
@@ -101,24 +103,24 @@ let itemsSpawnedInWindow = 0;
 // Counter API Logic
 async function updatePlayCountUI() {
     try {
-        const response = await fetch('https://api.counterapi.dev/v1/jejugoods-tiger-jump/plays');
+        // Increment and get the new count in one go (if supported) or just get the current
+        const response = await fetch('https://api.counterapi.dev/v1/jejugoods-tiger-jump/plays/up');
         const data = await response.json();
-        if (totalPlaysElement && data.count !== undefined) {
-            totalPlaysElement.innerText = data.count.toLocaleString();
+        if (data.count !== undefined) {
+            const formattedCount = data.count.toLocaleString();
+            if (totalPlaysElement) totalPlaysElement.innerText = formattedCount;
+            if (userSequenceNum) {
+                userSequenceNum.innerText = formattedCount;
+                userSequenceInfo.style.display = 'block';
+            }
         }
     } catch (e) {
-        console.error('Failed to fetch play count', e);
+        console.error('Failed to update play count', e);
         if (totalPlaysElement) totalPlaysElement.innerText = '수많은';
     }
 }
 
-async function incrementPlayCount() {
-    try {
-        await fetch('https://api.counterapi.dev/v1/jejugoods-tiger-jump/plays/up');
-    } catch (e) {
-        console.error('Failed to increment play count', e);
-    }
-}
+// remove separate incrementPlayCount as we now do it on load
 
 // Item Effects State
 let activeEffects = {
@@ -795,9 +797,6 @@ function startGame() {
     gameOverScreen.classList.remove('active');
     touchHint.classList.remove('hidden');
     hintTimer = 10;
-
-    // Increment global play count
-    incrementPlayCount();
 
     initGame();
     requestAnimationFrame(update);
