@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
 const timerElement = document.getElementById('timer');
 const finalScoreElement = document.getElementById('final-score');
+const totalPlaysElement = document.getElementById('total-plays');
 const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const startBtn = document.getElementById('start-btn');
@@ -96,6 +97,28 @@ let gameTimer = 30;
 let hintTimer = 10;
 let itemSpawnTimer = 0;
 let itemsSpawnedInWindow = 0;
+
+// Counter API Logic
+async function updatePlayCountUI() {
+    try {
+        const response = await fetch('https://api.counterapi.dev/v1/jejugoods-tiger-jump/plays');
+        const data = await response.json();
+        if (totalPlaysElement) {
+            totalPlaysElement.innerText = (data.count || 0).toLocaleString();
+        }
+    } catch (e) {
+        console.error('Failed to fetch play count', e);
+        if (totalPlaysElement) totalPlaysElement.innerText = '많은';
+    }
+}
+
+async function incrementPlayCount() {
+    try {
+        await fetch('https://api.counterapi.dev/v1/jejugoods-tiger-jump/plays/up');
+    } catch (e) {
+        console.error('Failed to increment play count', e);
+    }
+}
 
 // Item Effects State
 let activeEffects = {
@@ -772,6 +795,10 @@ function startGame() {
     gameOverScreen.classList.remove('active');
     touchHint.classList.remove('hidden');
     hintTimer = 10;
+
+    // Increment global play count
+    incrementPlayCount();
+
     initGame();
     requestAnimationFrame(update);
 }
@@ -807,3 +834,6 @@ updateCanvasSize();
 backgroundImg.onload = () => {
     if (gameState === 'MENU') drawBackground();
 };
+
+// Initial Data Fetch
+updatePlayCountUI();
