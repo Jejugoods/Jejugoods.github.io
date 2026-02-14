@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>제주굿즈의 게임 세상</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            text-align: center;
+        }
+        h1 { color: #00ff00; font-size: 3rem; }
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: #00ff00;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        button:hover { background: #00cc00; }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>🎮 Jejugoods Game World 🎮</h1>
+        <p>웹 게임 만들기 준비 완료!</p>
+        <button onclick="alert('게임 시작 준비 중입니다!')">게임 시작</button>
+    </div>
+</body>
+</html>
