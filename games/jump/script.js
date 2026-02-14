@@ -13,56 +13,12 @@ const JUMP_FORCE = -11;
 const MOVEMENT_SPEED = 5;
 const PLATFORM_WIDTH = 70;
 const PLATFORM_HEIGHT = 20;
-const PLATFORM_GAP_MIN = 40; // Reduced from 60
-const PLATFORM_GAP_MAX = 100; // Reduced from 130
+const PLATFORM_GAP_MIN = 60; // Adjusted for better playability
+const PLATFORM_GAP_MAX = 110; // Slightly reduced max gap
 
-// Assets (Using Imagebitmap for cleaner handling potentially, or just Image)
-const tigerImg = new Image();
-const platformImg = new Image();
+// Assets
+// Background is kept as image
 const backgroundImg = new Image();
-
-// Helper to remove white background
-function createTransparentImage(src, callback) {
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.src = src;
-    img.onload = () => {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = img.width;
-        tempCanvas.height = img.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(img, 0, 0);
-
-        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        const data = imageData.data;
-
-        // Loop through pixels
-        for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            // If white or very light grey
-            if (r > 240 && g > 240 && b > 240) {
-                data[i + 3] = 0; // Set alpha to 0
-            }
-        }
-
-        tempCtx.putImageData(imageData, 0, 0);
-        const newImg = new Image();
-        newImg.src = tempCanvas.toDataURL();
-        callback(newImg);
-    };
-}
-
-// Load and process images
-createTransparentImage('assets/tiger.png', (processedImg) => {
-    tigerImg.src = processedImg.src;
-});
-
-createTransparentImage('assets/platform.png', (processedImg) => {
-    platformImg.src = processedImg.src;
-});
-
 backgroundImg.src = 'assets/background.png';
 
 // Game State
@@ -107,11 +63,23 @@ window.addEventListener('touchend', () => {
     keys.ArrowRight = false;
 });
 
-// Player Class (White Tiger)
+// Utility: Draw Stripe (for Tiger)
+function drawStripe(ctx, x, y, length, angle, width = 3) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, length, width, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
+// Player Class (White Tiger - Canvas Drawn)
 class Player {
     constructor() {
-        this.width = 60; // Slightly larger for image visibility
-        this.height = 60;
+        this.width = 50;
+        this.height = 50;
         this.x = canvas.width / 2 - this.width / 2;
         this.y = canvas.height - 150;
         this.vx = 0;
@@ -132,16 +100,109 @@ class Player {
         ctx.translate(centerX, centerY);
         if (!this.facingRight) ctx.scale(-1, 1);
 
-        // Draw Image
-        if (tigerImg.complete && tigerImg.src) {
-            ctx.drawImage(tigerImg, -this.width / 2, -this.height / 2, this.width, this.height);
-        } else {
-            // Fallback
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        // --- Body ---
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(0, 5, 20, 18, 0, 0, Math.PI * 2); // Chubby body
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#2d3436';
+        ctx.stroke();
+
+        // Body Stripes
+        drawStripe(ctx, -5, 5, 4, Math.PI / 4);
+        drawStripe(ctx, 0, 5, 4, 0);
+        drawStripe(ctx, 5, 5, 4, -Math.PI / 4);
+
+        // --- Head ---
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, -10, 18, 0, Math.PI * 2); // Big head
+        ctx.fill();
+        ctx.stroke();
+
+        // Ears
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-12, -22, 6, 0, Math.PI * 2); // Left ear
+        ctx.arc(12, -22, 6, 0, Math.PI * 2);  // Right ear
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff7675'; // Pink inside ears
+        ctx.beginPath();
+        ctx.arc(-12, -22, 3, 0, Math.PI * 2);
+        ctx.arc(12, -22, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head Stripes (Forehead)
+        drawStripe(ctx, 0, -22, 4, Math.PI / 2, 2);
+        drawStripe(ctx, -8, -18, 3, Math.PI / 4, 1.5);
+        drawStripe(ctx, 8, -18, 3, -Math.PI / 4, 1.5);
+
+        // Face
+        // Eyes
+        ctx.fillStyle = '#fdcb6e'; // Golden eyes
+        ctx.beginPath();
+        ctx.arc(-7, -10, 4, 0, Math.PI * 2);
+        ctx.arc(7, -10, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'black'; // Pupils
+        ctx.beginPath();
+        ctx.arc(-7, -10, 2, 0, Math.PI * 2);
+        ctx.arc(7, -10, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nose & Mouth
+        ctx.fillStyle = '#ff7675';
+        ctx.beginPath();
+        ctx.arc(0, -4, 2.5, 0, Math.PI * 2); // Nose
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -4);
+        ctx.lineTo(-3, 0);
+        ctx.moveTo(0, -4);
+        ctx.lineTo(3, 0); // Cat mouth
+        ctx.stroke();
+
+        // Cheeks
+        ctx.fillStyle = 'rgba(255, 118, 117, 0.4)';
+        ctx.beginPath();
+        ctx.arc(-12, -5, 3, 0, Math.PI * 2);
+        ctx.arc(12, -5, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- Paws ---
+        ctx.fillStyle = '#ffffff';
+        // Hands
+        ctx.beginPath();
+        ctx.arc(-15, 5, 5, 0, Math.PI * 2);
+        ctx.arc(15, 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Feet (if jumping vs standing)
+        ctx.beginPath();
+        ctx.arc(-10, 20, 6, 0, Math.PI * 2);
+        ctx.arc(10, 20, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // --- Tail ---
+        ctx.strokeStyle = '#2d3436';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(15, 15);
+        ctx.quadraticCurveTo(25, 20, 25, 10);
+        ctx.stroke();
+        // Tail stripe
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(22, 18);
+        ctx.lineTo(24, 16);
+        ctx.stroke();
 
         ctx.restore();
     }
@@ -182,30 +243,44 @@ class Player {
     }
 }
 
-// Platform Class (Clouds)
+// Platform Class (Clouds - Canvas Drawn)
 class Platform {
     constructor(x, y) {
         this.x = x;
         this.y = y;
         this.width = PLATFORM_WIDTH;
-        this.height = PLATFORM_HEIGHT * 2.5; // Taller for image aspect ratio
-        this.hitboxHeight = 20; // Only collide with top part
+        this.height = PLATFORM_HEIGHT;
+        this.hitboxHeight = 20;
         this.type = Math.random() < 0.1 ? 'moving' : 'normal';
         this.vx = this.type === 'moving' ? (Math.random() < 0.5 ? 2 : -2) : 0;
     }
 
     draw() {
-        if (platformImg.complete && platformImg.src) {
-            // Draw slightly larger than Hitbox for visual fluff
-            ctx.drawImage(platformImg, this.x - 10, this.y - 10, this.width + 20, this.height);
-        } else {
-            // Fallback
-            ctx.fillStyle = '#dfe6e9';
-            ctx.fillRect(this.x, this.y, this.width, this.hitboxHeight);
-        }
+        // Cloud Drawing (Minhwa Style)
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#74b9ff'; // Light blue outline
+        ctx.lineWidth = 2;
 
-        // Moving platform indicator (optional - visual only)
-        // If the platform image itself suggests movement, or we could add sparkles
+        // Main cloud shape (3 puffy circles)
+        ctx.beginPath();
+
+        // Left
+        ctx.arc(this.x + 10, this.y + 10, 15, 0, Math.PI * 2);
+        // Middle (Higher)
+        ctx.arc(this.x + this.width / 2, this.y + 5, 20, 0, Math.PI * 2);
+        // Right
+        ctx.arc(this.x + this.width - 10, this.y + 10, 15, 0, Math.PI * 2);
+
+        ctx.fill();
+        ctx.stroke();
+
+        // Moving platform indicator
+        if (this.type === 'moving') {
+            ctx.fillStyle = '#81ecec';
+            ctx.beginPath();
+            ctx.arc(this.x + this.width / 2, this.y + 10, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     update() {
@@ -245,18 +320,14 @@ class Particle {
     }
 }
 
-// Background Drawing
+// Background Drawing (Using User Image)
 function drawBackground() {
     if (backgroundImg.complete) {
-        // Simple parallax logic:
-        // Background moves very slowly based on player vertical position
-        // This is tricky with infinite scroll without repeating image
-        // Just fill screen for now
+        // Just fill screen, covering nicely
         const scale = Math.max(canvas.width / backgroundImg.width, canvas.height / backgroundImg.height);
         const x = (canvas.width / 2) - (backgroundImg.width / 2) * scale;
         const y = (canvas.height / 2) - (backgroundImg.height / 2) * scale;
         ctx.drawImage(backgroundImg, x, y, backgroundImg.width * scale, backgroundImg.height * scale);
-
     } else {
         // Fallback Gradient
         const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -318,13 +389,12 @@ function update() {
         p.draw();
 
         // Collision Check (Only when falling)
-        // Check against the hitbox (top part of the image)
         if (
             player.vy > 0 &&
             player.x + player.width * 0.7 > p.x &&
             player.x + player.width * 0.3 < p.x + p.width &&
             player.y + player.height * 0.8 > p.y &&
-            player.y + player.height * 0.8 < p.y + p.hitboxHeight + 15
+            player.y + player.height * 0.8 < p.y + p.hitboxHeight
         ) {
             player.jump();
         }
@@ -384,7 +454,6 @@ window.addEventListener('resize', () => {
 // Initial Setup
 canvas.width = window.innerWidth > 480 ? 480 : window.innerWidth;
 canvas.height = window.innerHeight;
-// Draw generic background on load (wait for image?)
 backgroundImg.onload = () => {
     if (gameState === 'MENU') drawBackground();
 };
