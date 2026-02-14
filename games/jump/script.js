@@ -32,46 +32,53 @@ let GRAVITY, JUMP_FORCE, MOVEMENT_SPEED, PLATFORM_WIDTH, PLATFORM_HEIGHT, PLATFO
 const assets = {
     tigerJump: 'assets/tiger_jump.png',
     tigerFail: 'assets/tiger_fail.png',
-    platform: 'assets/platform.png',
-    background: 'assets/background.png'
+    platform: 'assets/platform.png'
 };
 
 const images = {};
 let loadedAssets = 0;
-const totalAssets = Object.keys(assets).length;
+const criticalAssets = Object.keys(assets).length;
+let backgroundLoaded = false;
+
+function hideLoadingScreen() {
+    loadingScreen.classList.add('hidden');
+}
+
+// Safety Timeout - Force start after 10 seconds if stuck
+const safetyTimeout = setTimeout(hideLoadingScreen, 10000);
 
 function checkAssetsLoaded() {
     loadedAssets++;
-    const progress = (loadedAssets / totalAssets) * 100;
+    const progress = (loadedAssets / criticalAssets) * 100;
     loadingBar.style.width = `${progress}%`;
 
-    if (loadedAssets === totalAssets) {
-        setTimeout(() => {
-            loadingScreen.classList.add('hidden');
-        }, 500);
+    if (loadedAssets === criticalAssets) {
+        clearTimeout(safetyTimeout);
+        setTimeout(hideLoadingScreen, 500);
     }
 }
 
-// Load Assets
+// Load Critical Assets
 const tigerJumpImg = new Image();
 const tigerFallImg = new Image();
 const platformImg = new Image();
-const backgroundImg = new Image();
 
 tigerJumpImg.onload = checkAssetsLoaded;
 tigerFallImg.onload = checkAssetsLoaded;
 platformImg.onload = checkAssetsLoaded;
-backgroundImg.onload = checkAssetsLoaded;
 
 tigerJumpImg.onerror = checkAssetsLoaded;
 tigerFallImg.onerror = checkAssetsLoaded;
 platformImg.onerror = checkAssetsLoaded;
-backgroundImg.onerror = checkAssetsLoaded;
 
 tigerJumpImg.src = assets.tigerJump;
 tigerFallImg.src = assets.tigerFail;
 platformImg.src = assets.platform;
-backgroundImg.src = assets.background;
+
+// Load Background (Non-critical)
+const backgroundImg = new Image();
+backgroundImg.onload = () => { backgroundLoaded = true; };
+backgroundImg.src = 'assets/background.png';
 
 // Game State
 let gameState = 'MENU';
