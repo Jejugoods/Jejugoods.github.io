@@ -94,6 +94,8 @@ let frameCount = 0;
 let lastTime = 0;
 let gameTimer = 30;
 let hintTimer = 10;
+let itemSpawnTimer = 0;
+let itemsSpawnedInWindow = 0;
 
 // Item Effects State
 let activeEffects = {
@@ -570,7 +572,7 @@ function initGame() {
 
 function activateRandomEffect() {
     const rand = Math.random();
-    gameTimer += 10; // Add 10 seconds on any collection
+    gameTimer += 5; // Add 5 seconds on any collection
     if (rand < 0.25) {
         // Super Jump (8 seconds)
         activeEffects.superJump = 60 * 8;
@@ -626,6 +628,13 @@ function update(timestamp) {
         if (hintTimer <= 0) {
             touchHint.classList.add('hidden');
         }
+    }
+
+    // Item Spawn Timer Logic
+    itemSpawnTimer += dt / 1000;
+    if (itemSpawnTimer >= 5.0) {
+        itemSpawnTimer = 0;
+        itemsSpawnedInWindow = 0;
     }
 
     // Update & Draw Player
@@ -717,10 +726,23 @@ function update(timestamp) {
 
         platforms.push(new Platform(x, y));
 
-        // Spawn Item (10% Chance)
-        if (Math.random() < 0.1) {
-            // Place item on center of platform
+        // Spawn Item logic (Guaranteed 1-2 items every 5 seconds)
+        // Probabilistic spawn that forces minimum if window is ending
+        let shouldSpawn = false;
+
+        // If window is half over and none spawned, 20% chance
+        // If window is almost over and none spawned, force it
+        if (itemsSpawnedInWindow === 0) {
+            if (itemSpawnTimer > 4.5) shouldSpawn = true;
+            else if (itemSpawnTimer > 2.5 && Math.random() < 0.15) shouldSpawn = true;
+        } else if (itemsSpawnedInWindow === 1 && itemSpawnTimer > 3.5 && Math.random() < 0.1) {
+            // Low chance for a second item in the same window
+            shouldSpawn = true;
+        }
+
+        if (shouldSpawn && itemsSpawnedInWindow < 2) {
             items.push(new Item(x + PLATFORM_WIDTH / 2 - 20, y - 40));
+            itemsSpawnedInWindow++;
         }
     }
 
