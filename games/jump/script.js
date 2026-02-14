@@ -743,21 +743,21 @@ function update(timestamp) {
 
         platforms.push(new Platform(x, y));
 
-        // Spawn Item logic (Guaranteed 1-2 items every 5 seconds)
-        // Probabilistic spawn that forces minimum if window is ending
+        // Spawn Item logic (Guaranteed 2-3 items every 5 seconds)
         let shouldSpawn = false;
 
-        // If window is half over and none spawned, 20% chance
-        // If window is almost over and none spawned, force it
         if (itemsSpawnedInWindow === 0) {
-            if (itemSpawnTimer > 4.5) shouldSpawn = true;
-            else if (itemSpawnTimer > 2.5 && Math.random() < 0.15) shouldSpawn = true;
-        } else if (itemsSpawnedInWindow === 1 && itemSpawnTimer > 3.5 && Math.random() < 0.1) {
-            // Low chance for a second item in the same window
-            shouldSpawn = true;
+            if (itemSpawnTimer > 2.0) shouldSpawn = true; // Force first early
+            else if (itemSpawnTimer > 0.5 && Math.random() < 0.2) shouldSpawn = true;
+        } else if (itemsSpawnedInWindow === 1) {
+            if (itemSpawnTimer > 4.0) shouldSpawn = true; // Force second if window ending
+            else if (itemSpawnTimer > 2.0 && Math.random() < 0.2) shouldSpawn = true;
+        } else if (itemsSpawnedInWindow === 2) {
+            // Chance for a third item
+            if (itemSpawnTimer > 3.5 && Math.random() < 0.15) shouldSpawn = true;
         }
 
-        if (shouldSpawn && itemsSpawnedInWindow < 2) {
+        if (shouldSpawn && itemsSpawnedInWindow < 3) {
             items.push(new Item(x + PLATFORM_WIDTH / 2 - 20, y - 40));
             itemsSpawnedInWindow++;
         }
