@@ -365,25 +365,42 @@ function drawUI() {
     // Top Right Effects List
     let yPos = 80;
     ctx.textAlign = 'right';
-    ctx.font = 'bold 20px sans-serif';
 
     if (activeEffects.superJump > 0) {
         const seconds = Math.ceil(activeEffects.superJump / 60);
         ctx.fillStyle = '#fdcb6e'; // Gold
-        ctx.fillText(`🚀 Super Jump: ${seconds}s`, canvas.width - 20, yPos);
-        yPos += 30;
+        ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+        ctx.fillText(`🚀 슈퍼 점프: ${seconds}초`, canvas.width - 20, yPos);
+
+        ctx.font = '14px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = '#ffeaa7';
+        ctx.fillText(`점프력이 엄청 높아져요!`, canvas.width - 20, yPos + 20);
+
+        yPos += 50;
     }
     if (activeEffects.doubleScore > 0) {
         const seconds = Math.ceil(activeEffects.doubleScore / 60);
         ctx.fillStyle = '#fab1a0'; // Pink
-        ctx.fillText(`💰 Double Score: ${seconds}s`, canvas.width - 20, yPos);
-        yPos += 30;
+        ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+        ctx.fillText(`💰 점수 2배: ${seconds}초`, canvas.width - 20, yPos);
+
+        ctx.font = '14px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = '#ffcccc';
+        ctx.fillText(`점수가 팍팍 오릅니다!`, canvas.width - 20, yPos + 20);
+
+        yPos += 50;
     }
     if (activeEffects.dizzy > 0) {
         const seconds = Math.ceil(activeEffects.dizzy / 60);
         ctx.fillStyle = '#a29bfe'; // Purple
-        ctx.fillText(`💫 Dizzy: ${seconds}s`, canvas.width - 20, yPos);
-        yPos += 30;
+        ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+        ctx.fillText(`💫 어지러움: ${seconds}초`, canvas.width - 20, yPos);
+
+        ctx.font = '14px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = '#dcd6f7';
+        ctx.fillText(`좌우 방향이 반대예요!`, canvas.width - 20, yPos + 20);
+
+        yPos += 50;
     }
 
     ctx.textAlign = 'start'; // Reset

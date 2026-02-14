@@ -77,6 +77,14 @@ canvas {
     margin-bottom: 20px;
     color: #fdcb6e;
     text-shadow: 2px 2px 0 #d63031;
+    margin-top: 10px;
+}
+
+#main-tiger-img {
+    width: 180px;
+    height: auto;
+    margin-bottom: 10px;
+    animation: bounce 2s infinite;
 }
 
 .screen h1 small {
