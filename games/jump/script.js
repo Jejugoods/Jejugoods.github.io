@@ -7,6 +7,7 @@ const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const startBtn = document.getElementById('start-btn');
 const restartBtn = document.getElementById('restart-btn');
+const touchHint = document.getElementById('touch-controls-hint');
 
 // Game Constants
 const GRAVITY = 0.4;
@@ -44,6 +45,7 @@ let keys = {
 let frameCount = 0; // For animation
 let lastTime = 0;
 let gameTimer = 30; // 30 seconds initial
+let hintTimer = 10; // 10 seconds for touch hint
 
 // Item Effects State
 let activeEffects = {
@@ -528,9 +530,13 @@ function update(timestamp) {
     if (activeEffects.dizzy > 0) activeEffects.dizzy -= dtScalar;
     if (activeEffects.fastSpeed > 0) activeEffects.fastSpeed -= dtScalar;
 
-    // Update & Draw Player
-    player.update(dtScalar);
-    player.draw();
+    // Touch Hint Management
+    if (hintTimer > 0) {
+        hintTimer -= dt / 1000;
+        if (hintTimer <= 0) {
+            touchHint.classList.add('hidden');
+        }
+    }
 
     // Move Camera (Scroll platforms down if player goes up high)
     if (player.y < canvas.height / 2) {
@@ -634,6 +640,8 @@ function startGame() {
     gameState = 'PLAYING';
     startScreen.classList.remove('active');
     gameOverScreen.classList.remove('active');
+    touchHint.classList.remove('hidden');
+    hintTimer = 10;
     initGame();
     requestAnimationFrame(update);
 }
