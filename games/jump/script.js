@@ -366,41 +366,47 @@ function drawUI() {
     let yPos = 80;
     ctx.textAlign = 'right';
 
+    // Helper for background
+    const drawEffectBox = (title, desc, color, y) => {
+        const padding = 10;
+        const boxWidth = 220;
+        const boxHeight = 50;
+        const x = canvas.width - 10;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(x - boxWidth, y - 25, boxWidth, boxHeight, 10);
+        } else {
+            ctx.rect(x - boxWidth, y - 25, boxWidth, boxHeight);
+        }
+        ctx.fill();
+
+        // Title
+        ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = color;
+        ctx.fillText(title, x - padding, y);
+
+        // Description
+        ctx.font = '14px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = '#ffffff'; // White for readability
+        ctx.fillText(desc, x - padding, y + 20);
+    };
+
     if (activeEffects.superJump > 0) {
         const seconds = Math.ceil(activeEffects.superJump / 60);
-        ctx.fillStyle = '#fdcb6e'; // Gold
-        ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
-        ctx.fillText(`🚀 슈퍼 점프: ${seconds}초`, canvas.width - 20, yPos);
-
-        ctx.font = '14px "Noto Sans KR", sans-serif';
-        ctx.fillStyle = '#ffeaa7';
-        ctx.fillText(`점프력이 엄청 높아져요!`, canvas.width - 20, yPos + 20);
-
-        yPos += 50;
+        drawEffectBox(`🚀 슈퍼 점프: ${seconds}초`, '점프력이 엄청 높아져요!', '#fdcb6e', yPos);
+        yPos += 60;
     }
     if (activeEffects.doubleScore > 0) {
         const seconds = Math.ceil(activeEffects.doubleScore / 60);
-        ctx.fillStyle = '#fab1a0'; // Pink
-        ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
-        ctx.fillText(`💰 점수 2배: ${seconds}초`, canvas.width - 20, yPos);
-
-        ctx.font = '14px "Noto Sans KR", sans-serif';
-        ctx.fillStyle = '#ffcccc';
-        ctx.fillText(`점수가 팍팍 오릅니다!`, canvas.width - 20, yPos + 20);
-
-        yPos += 50;
+        drawEffectBox(`💰 점수 2배: ${seconds}초`, '점수가 팍팍 오릅니다!', '#fab1a0', yPos);
+        yPos += 60;
     }
     if (activeEffects.dizzy > 0) {
         const seconds = Math.ceil(activeEffects.dizzy / 60);
-        ctx.fillStyle = '#a29bfe'; // Purple
-        ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
-        ctx.fillText(`💫 어지러움: ${seconds}초`, canvas.width - 20, yPos);
-
-        ctx.font = '14px "Noto Sans KR", sans-serif';
-        ctx.fillStyle = '#dcd6f7';
-        ctx.fillText(`좌우 방향이 반대예요!`, canvas.width - 20, yPos + 20);
-
-        yPos += 50;
+        drawEffectBox(`💫 어지러움: ${seconds}초`, '좌우 방향이 반대예요!', '#a29bfe', yPos);
+        yPos += 60;
     }
 
     ctx.textAlign = 'start'; // Reset
