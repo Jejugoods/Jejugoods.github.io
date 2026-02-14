@@ -7,6 +7,8 @@ html {
     overflow: hidden;
     background-color: #74b9ff;
     font-family: 'Noto Sans KR', sans-serif;
+    touch-action: none;
+    overscroll-behavior: none;
 }
 
 #game-container {
@@ -18,6 +20,8 @@ html {
     margin: 0 auto;
     background-color: white;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    touch-action: none;
+    overscroll-behavior: none;
 }
 
 canvas {
