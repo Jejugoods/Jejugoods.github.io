@@ -4,8 +4,6 @@ const scoreElement = document.getElementById('score');
 const timerElement = document.getElementById('timer');
 const finalScoreElement = document.getElementById('final-score');
 const totalPlaysElement = document.getElementById('total-plays');
-const userSequenceInfo = document.getElementById('user-sequence-info');
-const userSequenceNum = document.getElementById('user-sequence-num');
 const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const startBtn = document.getElementById('start-btn');
@@ -103,16 +101,10 @@ let itemsSpawnedInWindow = 0;
 // Counter API Logic
 async function updatePlayCountUI() {
     try {
-        // Increment and get the new count in one go (if supported) or just get the current
         const response = await fetch('https://api.counterapi.dev/v1/jejugoods-tiger-jump/plays/up');
         const data = await response.json();
-        if (data.count !== undefined) {
-            const formattedCount = data.count.toLocaleString();
-            if (totalPlaysElement) totalPlaysElement.innerText = formattedCount;
-            if (userSequenceNum) {
-                userSequenceNum.innerText = formattedCount;
-                userSequenceInfo.style.display = 'block';
-            }
+        if (data.count !== undefined && totalPlaysElement) {
+            totalPlaysElement.innerText = data.count.toLocaleString();
         }
     } catch (e) {
         console.error('Failed to update play count', e);
