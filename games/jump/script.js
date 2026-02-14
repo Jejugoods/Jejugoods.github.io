@@ -103,12 +103,12 @@ async function updatePlayCountUI() {
     try {
         const response = await fetch('https://api.counterapi.dev/v1/jejugoods-tiger-jump/plays');
         const data = await response.json();
-        if (totalPlaysElement) {
-            totalPlaysElement.innerText = (data.count || 0).toLocaleString();
+        if (totalPlaysElement && data.count !== undefined) {
+            totalPlaysElement.innerText = data.count.toLocaleString();
         }
     } catch (e) {
         console.error('Failed to fetch play count', e);
-        if (totalPlaysElement) totalPlaysElement.innerText = '많은';
+        if (totalPlaysElement) totalPlaysElement.innerText = '수많은';
     }
 }
 
