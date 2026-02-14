@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>White Tiger Jump</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Noto+Sans+KR:wght@400;700&display=swap');
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-layer">
+            <div id="score-display">점수: <span id="score">0</span></div>
+
+            <div id="start-screen" class="screen active">
+                <h1>백호의 도약<br><small>White Tiger Jump</small></h1>
+                <p>화면 좌우를 터치하거나<br>방향키로 이동하세요!</p>
+                <button id="start-btn">게임 시작</button>
+            </div>
+
+            <div id="game-over-screen" class="screen">
+                <h1><span class="sad-tiger">😿</span><br>떨어졌어요!</h1>
+                <p>최종 점수: <span id="final-score">0</span></p>
+                <button id="restart-btn">다시 도전</button>
+                <button id="home-btn" onclick="location.href='../../index.html'">메인으로</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
