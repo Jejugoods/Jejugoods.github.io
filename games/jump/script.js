@@ -33,12 +33,20 @@ backgroundImg.src = 'assets/background.png';
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
 let score = 0;
 let platforms = [];
+let items = []; // Active items in the world
 let particles = [];
 let keys = {
     ArrowLeft: false,
     ArrowRight: false
 };
 let frameCount = 0; // For animation
+
+// Item Effects State
+let activeEffects = {
+    superJump: 0,   // Duration in frames
+    doubleScore: 0,
+    dizzy: 0
+};
 
 // Input Handling
 window.addEventListener('keydown', (e) => {
@@ -122,14 +130,30 @@ class Player {
             ctx.fill();
         }
 
+        // Draw Dizzy Effect (Stars over head)
+        if (activeEffects.dizzy > 0) {
+            ctx.fillStyle = 'yellow';
+            ctx.fillText('💫', -10, -this.height / 2 - 10);
+        }
+
         ctx.restore();
     }
 
     update() {
+        // Handle Control Inversion (Dizzy Effect)
+        let leftInput = keys.ArrowLeft;
+        let rightInput = keys.ArrowRight;
+
+        if (activeEffects.dizzy > 0) {
+            // Swap inputs
+            leftInput = keys.ArrowRight;
+            rightInput = keys.ArrowLeft;
+        }
+
         // Horizontal Movement
-        if (keys.ArrowLeft) {
+        if (leftInput) {
             this.vx = -MOVEMENT_SPEED;
-        } else if (keys.ArrowRight) {
+        } else if (rightInput) {
             this.vx = MOVEMENT_SPEED;
         } else {
             this.vx *= 0.8; // Friction
@@ -157,7 +181,15 @@ class Player {
     }
 
     jump() {
-        this.vy = JUMP_FORCE;
+        // Super Jump Effect
+        let jumpPower = JUMP_FORCE;
+        if (activeEffects.superJump > 0) {
+            jumpPower *= 1.3; // 30% boost (enough for screen clearing jumps)
+            // Visual flair for super jump
+            createBurstParticles(this.x + this.width / 2, this.y + this.height, '#ff7675');
+        }
+
+        this.vy = jumpPower;
 
         // Squash & Stretch Impact
         this.scaleX = 0.8; // Thin
@@ -167,6 +199,72 @@ class Player {
         for (let i = 0; i < 30; i++) {
             particles.push(new Particle(this.x + this.width / 2, this.y + this.height - 10));
         }
+    }
+}
+
+// Item Class (Lucky Bag - Bokjumeoni)
+class Item {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 40;
+        this.type = 'random'; // Initial state is unknown
+        this.collected = false;
+
+        // Floating animation
+        this.floatOffset = 0;
+    }
+
+    draw() {
+        if (this.collected) return;
+
+        this.floatOffset = Math.sin(frameCount * 0.1) * 5;
+        const renderY = this.y + this.floatOffset;
+
+        ctx.save();
+        ctx.translate(this.x + this.width / 2, renderY + this.height / 2);
+
+        // Draw Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.ellipse(0, 25, 15, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Pouch Body (Red/Blue gradient)
+        const grad = ctx.createLinearGradient(-15, -20, 15, 20);
+        grad.addColorStop(0, '#ff7675'); // Pinkish Red
+        grad.addColorStop(1, '#d63031'); // Deep Red
+        ctx.fillStyle = grad;
+
+        ctx.beginPath();
+        ctx.moveTo(0, -20); // Top knot center
+        ctx.bezierCurveTo(-20, -10, -25, 25, 0, 25); // Left side
+        ctx.bezierCurveTo(25, 25, 20, -10, 0, -20); // Right side
+        ctx.fill();
+        ctx.strokeStyle = '#632c2c'; // Dark outline
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw Gold Tie
+        ctx.fillStyle = '#fdcb6e'; // Gold
+        ctx.beginPath();
+        ctx.arc(0, -12, 6, 0, Math.PI * 2); // Knot
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw 'Lucky' Symbol (Hanja 'Bok' simplified)
+        ctx.fillStyle = 'white';
+        ctx.font = '20px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('福', 0, 5);
+
+        ctx.restore();
+    }
+
+    update() {
+        // Items move with platforms (scrolling handled in main loop)
     }
 }
 
@@ -207,14 +305,14 @@ class Platform {
 
 // Particle Class (Dust Clouds)
 class Particle {
-    constructor(x, y) {
+    constructor(x, y, color) {
         this.x = x;
         this.y = y;
         this.size = Math.random() * 10 + 5; // Initial size diversity
         this.vx = (Math.random() - 0.5) * 6; // Spread wider horizontally
         this.vy = Math.random() * 3 + 1; // Move mostly downwards slightly for dust kick
         this.alpha = 1;
-        this.color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`; // White/Cloudy
+        this.color = color || `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`; // White/Cloudy
     }
     update() {
         this.x += this.vx;
@@ -231,6 +329,16 @@ class Particle {
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+    }
+}
+
+// Helper to spawn a burst of particles
+function createBurstParticles(x, y, color) {
+    for (let i = 0; i < 10; i++) {
+        let p = new Particle(x, y, color);
+        p.vy = (Math.random() - 0.5) * 10; // Explode out
+        p.vx = (Math.random() - 0.5) * 10;
+        particles.push(p);
     }
 }
 
@@ -252,6 +360,35 @@ function drawBackground() {
     }
 }
 
+// UI Drawing
+function drawUI() {
+    // Top Right Effects List
+    let yPos = 80;
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 20px sans-serif';
+
+    if (activeEffects.superJump > 0) {
+        const seconds = Math.ceil(activeEffects.superJump / 60);
+        ctx.fillStyle = '#fdcb6e'; // Gold
+        ctx.fillText(`🚀 Super Jump: ${seconds}s`, canvas.width - 20, yPos);
+        yPos += 30;
+    }
+    if (activeEffects.doubleScore > 0) {
+        const seconds = Math.ceil(activeEffects.doubleScore / 60);
+        ctx.fillStyle = '#fab1a0'; // Pink
+        ctx.fillText(`💰 Double Score: ${seconds}s`, canvas.width - 20, yPos);
+        yPos += 30;
+    }
+    if (activeEffects.dizzy > 0) {
+        const seconds = Math.ceil(activeEffects.dizzy / 60);
+        ctx.fillStyle = '#a29bfe'; // Purple
+        ctx.fillText(`💫 Dizzy: ${seconds}s`, canvas.width - 20, yPos);
+        yPos += 30;
+    }
+
+    ctx.textAlign = 'start'; // Reset
+}
+
 // Game Logic
 let player = new Player();
 
@@ -260,8 +397,16 @@ function initGame() {
     canvas.height = window.innerHeight;
     player = new Player();
     platforms = [];
+    items = [];
     score = 0;
     scoreElement.innerText = 0;
+
+    // Reset effects
+    activeEffects = {
+        superJump: 0,
+        doubleScore: 0,
+        dizzy: 0
+    };
 
     // Create initial platforms
     let y = canvas.height - 100;
@@ -272,6 +417,23 @@ function initGame() {
     }
 }
 
+function activateRandomEffect() {
+    const rand = Math.random();
+    if (rand < 0.33) {
+        // Super Jump (8 seconds)
+        activeEffects.superJump = 60 * 8;
+        createBurstParticles(player.x + player.width / 2, player.y, '#fdcb6e');
+    } else if (rand < 0.66) {
+        // Double Score (10 seconds)
+        activeEffects.doubleScore = 60 * 10;
+        createBurstParticles(player.x + player.width / 2, player.y, '#fab1a0');
+    } else {
+        // Dizzy (Poison) (5 seconds)
+        activeEffects.dizzy = 60 * 5;
+        createBurstParticles(player.x + player.width / 2, player.y, '#a29bfe');
+    }
+}
+
 function update() {
     frameCount++;
     if (gameState !== 'PLAYING') return;
@@ -279,6 +441,11 @@ function update() {
     // Clear & Draw Background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackground();
+
+    // Decrement Effect Timers
+    if (activeEffects.superJump > 0) activeEffects.superJump--;
+    if (activeEffects.doubleScore > 0) activeEffects.doubleScore--;
+    if (activeEffects.dizzy > 0) activeEffects.dizzy--;
 
     // Update & Draw Player
     player.update();
@@ -293,7 +460,14 @@ function update() {
             p.y += deltaY;
         });
 
-        score += Math.floor(deltaY);
+        items.forEach(i => {
+            i.y += deltaY;
+        });
+
+        // Score Calculation
+        let addedScore = Math.floor(deltaY);
+        if (activeEffects.doubleScore > 0) addedScore *= 2;
+        score += addedScore;
         scoreElement.innerText = score;
     }
 
@@ -320,11 +494,39 @@ function update() {
         }
     });
 
+    // Item Management
+    items.forEach((item, index) => {
+        item.draw();
+
+        // Item Collision (Simple AABB)
+        if (
+            player.x < item.x + item.width &&
+            player.x + player.width > item.x &&
+            player.y < item.y + item.height &&
+            player.y + player.height > item.y
+        ) {
+            // Collect Item
+            items.splice(index, 1);
+            activateRandomEffect();
+        }
+
+        // Remove items below screen
+        if (item.y > canvas.height) {
+            items.splice(index, 1);
+        }
+    });
+
     // Generate new platforms
     while (platforms[platforms.length - 1].y > PLATFORM_GAP_MIN) {
         let y = platforms[platforms.length - 1].y - (Math.random() * (PLATFORM_GAP_MAX - PLATFORM_GAP_MIN) + PLATFORM_GAP_MIN);
         let x = Math.random() * (canvas.width - PLATFORM_WIDTH);
         platforms.push(new Platform(x, y));
+
+        // Spawn Item (10% Chance)
+        if (Math.random() < 0.1) {
+            // Place item on center of platform
+            items.push(new Item(x + PLATFORM_WIDTH / 2 - 20, y - 40));
+        }
     }
 
     // Particles
@@ -333,6 +535,9 @@ function update() {
         p.draw();
         if (p.alpha <= 0) particles.splice(i, 1);
     });
+
+    // Draw UI
+    drawUI();
 
     // Game Over Check
     if (player.y > canvas.height) {
