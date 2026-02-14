@@ -80,16 +80,8 @@
             font-size: 4rem;
         }
 
-        .tictactoe-bg {
-            background: linear-gradient(45deg, #ff7675, #fab1a0);
-        }
-
-        .snake-bg {
-            background: linear-gradient(45deg, #55efc4, #81ecec);
-        }
-
-        .memory-bg {
-            background: linear-gradient(45deg, #74b9ff, #0984e3);
+        .tiger-bg {
+            background: linear-gradient(45deg, #fab1a0, #ff7675);
         }
 
         .card-content {
@@ -106,6 +98,8 @@
             font-size: 0.9rem;
             color: #636e72;
             margin-bottom: 20px;
+            min-height: 40px;
+            /* To align buttons even with short descriptions */
         }
 
         .play-btn {
@@ -145,38 +139,18 @@
 <body>
 
     <header>
-        <h1>🎮 미니게임 아케이드</h1>
-        <p class="subtitle">심심할 때 즐기는 간단한 게임 모음</p>
+        <h1>🎮 백호의 도약 (White Tiger Jump)</h1>
+        <p class="subtitle">어디까지 올라갈 수 있을까요?</p>
     </header>
 
     <div class="game-grid">
-        <!-- Tic-Tac-Toe Card -->
+        <!-- White Tiger Jump Card -->
         <div class="game-card">
-            <div class="card-image tictactoe-bg">❌⭕</div>
+            <div class="card-image tiger-bg">🐯</div>
             <div class="card-content">
-                <div class="game-title">틱택토 (Tic-Tac-Toe)</div>
-                <p class="game-desc">친구와 함께 승부를 겨루세요! 3줄을 먼저 완성하면 승리합니다.</p>
-                <a href="games/tictactoe/index.html" class="play-btn">게임 시작</a>
-            </div>
-        </div>
-
-        <!-- Snake Game Card (Placeholder) -->
-        <div class="game-card">
-            <div class="card-image snake-bg">🐍</div>
-            <div class="card-content">
-                <div class="game-title">스네이크 (Snake)</div>
-                <p class="game-desc">추억의 뱀 게임! 사과를 먹고 꼬리를 늘리세요.</p>
-                <span class="coming-soon">준비 중</span>
-            </div>
-        </div>
-
-        <!-- Memory Match Card (Placeholder) -->
-        <div class="game-card">
-            <div class="card-image memory-bg">🎴</div>
-            <div class="card-content">
-                <div class="game-title">카드 뒤집기 (Memory)</div>
-                <p class="game-desc">같은 그림의 카드를 찾아 기억력을 테스트해보세요.</p>
-                <span class="coming-soon">준비 중</span>
+                <div class="game-title">백호 점프 (Tiger Jump)</div>
+                <p class="game-desc">발판을 밟고 하늘 높이 올라가세요! 떨어지면 안돼요.</p>
+                <a href="games/jump/index.html" class="play-btn">게임 시작</a>
             </div>
         </div>
     </div>
