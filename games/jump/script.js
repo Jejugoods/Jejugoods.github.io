@@ -118,22 +118,26 @@ window.addEventListener('keyup', (e) => {
 
 // Touch controls for mobile
 window.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touchX = e.touches[0].clientX;
-    const screenWidth = window.innerWidth;
-    if (touchX < screenWidth / 2) {
-        keys.ArrowLeft = true;
-        keys.ArrowRight = false;
-    } else {
-        keys.ArrowRight = true;
-        keys.ArrowLeft = false;
+    if (gameState === 'PLAYING') {
+        e.preventDefault();
+        const touchX = e.touches[0].clientX;
+        const screenWidth = window.innerWidth;
+        if (touchX < screenWidth / 2) {
+            keys.ArrowLeft = true;
+            keys.ArrowRight = false;
+        } else {
+            keys.ArrowRight = true;
+            keys.ArrowLeft = false;
+        }
     }
 }, { passive: false });
 
 window.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    keys.ArrowLeft = false;
-    keys.ArrowRight = false;
+    if (gameState === 'PLAYING') {
+        e.preventDefault();
+        keys.ArrowLeft = false;
+        keys.ArrowRight = false;
+    }
 }, { passive: false });
 
 // Player Class (White Tiger - Animated Sprite)
