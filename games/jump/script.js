@@ -176,9 +176,9 @@ class Player {
             this.jump(); // Auto jump on start
         }
 
-        // Wrap around screen
-        if (this.x + this.width < 0) this.x = canvas.width;
-        if (this.x > canvas.width) this.x = -this.width;
+        // Screen Boundaries (Walls)
+        if (this.x < 0) this.x = 0;
+        if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
     }
 
     jump() {
