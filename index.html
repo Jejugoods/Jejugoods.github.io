@@ -1,38 +1,190 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
-    <title>제주굿즈의 게임 세상</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제주굿즈 미니게임 아케이드</title>
     <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --background-dark: #2d3436;
+            --card-bg: #dfe6e9;
+            --text-color: #2d3436;
+        }
+
         body {
-            background-color: black;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-dark);
             color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            margin-top: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: var(--secondary-color);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #b2bec3;
+            margin-top: 10px;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            width: 80%;
+            max-width: 1200px;
+            padding: 20px;
+        }
+
+        .game-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-image {
+            height: 180px;
+            background-color: #81ecec;
+            /* Placeholder color */
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: sans-serif;
-            text-align: center;
+            font-size: 4rem;
         }
-        h1 { color: #00ff00; font-size: 3rem; }
-        button {
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            background: #00ff00;
-            border: none;
-            border-radius: 5px;
+
+        .tictactoe-bg {
+            background: linear-gradient(45deg, #ff7675, #fab1a0);
+        }
+
+        .snake-bg {
+            background: linear-gradient(45deg, #55efc4, #81ecec);
+        }
+
+        .memory-bg {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            margin: 10px 0;
             font-weight: bold;
         }
-        button:hover { background: #00cc00; }
+
+        .game-desc {
+            font-size: 0.9rem;
+            color: #636e72;
+            margin-bottom: 20px;
+        }
+
+        .play-btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .play-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .coming-soon {
+            display: inline-block;
+            background-color: #b2bec3;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: not-allowed;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            color: #636e72;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
+
 <body>
-    <div>
-        <h1>🎮 Jejugoods Game World 🎮</h1>
-        <p>웹 게임 만들기 준비 완료!</p>
-        <button onclick="alert('게임 시작 준비 중입니다!')">게임 시작</button>
+
+    <header>
+        <h1>🎮 미니게임 아케이드</h1>
+        <p class="subtitle">심심할 때 즐기는 간단한 게임 모음</p>
+    </header>
+
+    <div class="game-grid">
+        <!-- Tic-Tac-Toe Card -->
+        <div class="game-card">
+            <div class="card-image tictactoe-bg">❌⭕</div>
+            <div class="card-content">
+                <div class="game-title">틱택토 (Tic-Tac-Toe)</div>
+                <p class="game-desc">친구와 함께 승부를 겨루세요! 3줄을 먼저 완성하면 승리합니다.</p>
+                <a href="games/tictactoe/index.html" class="play-btn">게임 시작</a>
+            </div>
+        </div>
+
+        <!-- Snake Game Card (Placeholder) -->
+        <div class="game-card">
+            <div class="card-image snake-bg">🐍</div>
+            <div class="card-content">
+                <div class="game-title">스네이크 (Snake)</div>
+                <p class="game-desc">추억의 뱀 게임! 사과를 먹고 꼬리를 늘리세요.</p>
+                <span class="coming-soon">준비 중</span>
+            </div>
+        </div>
+
+        <!-- Memory Match Card (Placeholder) -->
+        <div class="game-card">
+            <div class="card-image memory-bg">🎴</div>
+            <div class="card-content">
+                <div class="game-title">카드 뒤집기 (Memory)</div>
+                <p class="game-desc">같은 그림의 카드를 찾아 기억력을 테스트해보세요.</p>
+                <span class="coming-soon">준비 중</span>
+            </div>
+        </div>
     </div>
+
+    <footer>
+        &copy; 2024 Jejugoods. All rights reserved.
+    </footer>
+
 </body>
+
 </html>
