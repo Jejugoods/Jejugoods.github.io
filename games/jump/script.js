@@ -538,6 +538,10 @@ function update(timestamp) {
         }
     }
 
+    // Update & Draw Player
+    player.update(dtScalar);
+    player.draw();
+
     // Move Camera (Scroll platforms down if player goes up high)
     if (player.y < canvas.height / 2) {
         let deltaY = canvas.height / 2 - player.y;
