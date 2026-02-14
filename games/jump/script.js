@@ -32,13 +32,13 @@ let GRAVITY, JUMP_FORCE, MOVEMENT_SPEED, PLATFORM_WIDTH, PLATFORM_HEIGHT, PLATFO
 const assets = {
     tigerJump: 'assets/tiger_jump.png',
     tigerFail: 'assets/tiger_fail.png',
-    platform: 'assets/platform.png'
+    platform: 'assets/platform.png',
+    background: 'assets/background.png'
 };
 
 const images = {};
 let loadedAssets = 0;
 const criticalAssets = Object.keys(assets).length;
-let backgroundLoaded = false;
 
 function hideLoadingScreen() {
     loadingScreen.classList.add('hidden');
@@ -58,27 +58,26 @@ function checkAssetsLoaded() {
     }
 }
 
-// Load Critical Assets
+// Load Assets
 const tigerJumpImg = new Image();
 const tigerFallImg = new Image();
 const platformImg = new Image();
+const backgroundImg = new Image();
 
 tigerJumpImg.onload = checkAssetsLoaded;
 tigerFallImg.onload = checkAssetsLoaded;
 platformImg.onload = checkAssetsLoaded;
+backgroundImg.onload = checkAssetsLoaded;
 
 tigerJumpImg.onerror = checkAssetsLoaded;
 tigerFallImg.onerror = checkAssetsLoaded;
 platformImg.onerror = checkAssetsLoaded;
+backgroundImg.onerror = checkAssetsLoaded;
 
 tigerJumpImg.src = assets.tigerJump;
 tigerFallImg.src = assets.tigerFail;
 platformImg.src = assets.platform;
-
-// Load Background (Non-critical)
-const backgroundImg = new Image();
-backgroundImg.onload = () => { backgroundLoaded = true; };
-backgroundImg.src = 'assets/background.png';
+backgroundImg.src = assets.background;
 
 // Game State
 let gameState = 'MENU';
@@ -499,11 +498,27 @@ function drawUI() {
 let player = new Player();
 
 function initGame() {
-    canvas.width = window.innerWidth > 480 ? 480 : window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = window.innerWidth > 480 ? 480 : window.innerWidth;
+    const cssHeight = window.innerHeight;
+
+    // Set physical resolution
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+
+    // Set CSS display size
+    canvas.style.width = cssWidth + 'px';
+    canvas.style.height = cssHeight + 'px';
+
+    // Scale context to work with logical units
+    ctx.scale(dpr, dpr);
+
+    // Ensure high-quality image smoothing
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Update Scale Factor based on width
-    scaleFactor = canvas.width / LOGICAL_WIDTH;
+    scaleFactor = cssWidth / LOGICAL_WIDTH;
 
     // Update Scaled Constants
     GRAVITY = BASE_GRAVITY * scaleFactor;
@@ -754,14 +769,39 @@ restartBtn.addEventListener('click', startGame);
 
 // Handle resize
 window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth > 480 ? 480 : window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = window.innerWidth > 480 ? 480 : window.innerWidth;
+    const cssHeight = window.innerHeight;
+
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    canvas.style.width = cssWidth + 'px';
+    canvas.style.height = cssHeight + 'px';
+    ctx.scale(dpr, dpr);
+
+    // Maintain smoothing settings
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    if (gameState === 'MENU') drawBackground();
 });
 
 // Initial Setup
-canvas.width = window.innerWidth > 480 ? 480 : window.innerWidth;
-canvas.height = window.innerHeight;
-// Draw generic background on load (wait for image?)
+const initialDpr = window.devicePixelRatio || 1;
+const initialCssWidth = window.innerWidth > 480 ? 480 : window.innerWidth;
+const initialCssHeight = window.innerHeight;
+
+canvas.width = initialCssWidth * initialDpr;
+canvas.height = initialCssHeight * initialDpr;
+canvas.style.width = initialCssWidth + 'px';
+canvas.style.height = initialCssHeight + 'px';
+ctx.scale(initialDpr, initialDpr);
+
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = 'high';
+
+// Draw generic background on load
 backgroundImg.onload = () => {
+    backgroundLoaded = true; // Use common flag or just check complete
     if (gameState === 'MENU') drawBackground();
 };
