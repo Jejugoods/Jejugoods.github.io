@@ -463,39 +463,6 @@ function drawBackground() {
         const y = (gameHeight - scaledHeight) + scrollOffset;
 
         ctx.drawImage(backgroundImg, x, y, scaledWidth, scaledHeight);
-
-        // Score-based Background Transition
-        // 0~3000: Day, 3000~7000: Sunset, 7000~15000: Night, 15000+: Space
-        if (score > 3000) {
-            let overlayAlpha = 0;
-            let overlayColor = 'rgba(255, 121, 63, 0)'; // Sunset Orange
-
-            if (score <= 7000) {
-                // Day -> Sunset transition
-                overlayAlpha = (score - 3000) / 4000 * 0.4;
-                overlayColor = `rgba(255, 121, 63, ${overlayAlpha})`;
-            } else if (score <= 15000) {
-                // Sunset -> Night transition
-                // Keep some sunset orange base but add deep blue
-                const nightProgress = (score - 7000) / 8000;
-                overlayAlpha = 0.4 + (nightProgress * 0.4); // max 0.8
-                const r = Math.floor(255 * (1 - nightProgress * 0.8));
-                const g = Math.floor(121 * (1 - nightProgress * 0.8));
-                const b = Math.floor(63 + (150 * nightProgress));
-                overlayColor = `rgba(${r}, ${g}, ${b}, ${overlayAlpha})`;
-
-                // Add stars during night transition
-                drawStars(nightProgress);
-            } else {
-                // Space
-                overlayAlpha = 0.85;
-                overlayColor = 'rgba(10, 10, 40, 0.85)';
-                drawStars(1.0);
-            }
-
-            ctx.fillStyle = overlayColor;
-            ctx.fillRect(0, 0, gameWidth, gameHeight);
-        }
     } else {
         // Fallback Gradient
         const gradient = ctx.createLinearGradient(0, 0, 0, gameHeight);
@@ -802,21 +769,18 @@ function update(timestamp) {
 
         platforms.push(new Platform(x, y));
 
-        // Spawn Item logic (Guaranteed 2-3 items every 5 seconds)
+        // Spawn Item logic (Guaranteed 1-2 items every 5 seconds)
         let shouldSpawn = false;
 
         if (itemsSpawnedInWindow === 0) {
-            if (itemSpawnTimer > 2.0) shouldSpawn = true; // Force first early
-            else if (itemSpawnTimer > 0.5 && Math.random() < 0.2) shouldSpawn = true;
+            if (itemSpawnTimer > 3.5) shouldSpawn = true; // Force first later
+            else if (itemSpawnTimer > 1.5 && Math.random() < 0.15) shouldSpawn = true;
         } else if (itemsSpawnedInWindow === 1) {
-            if (itemSpawnTimer > 4.0) shouldSpawn = true; // Force second if window ending
-            else if (itemSpawnTimer > 2.0 && Math.random() < 0.2) shouldSpawn = true;
-        } else if (itemsSpawnedInWindow === 2) {
-            // Chance for a third item
-            if (itemSpawnTimer > 3.5 && Math.random() < 0.15) shouldSpawn = true;
+            // Chance for a second item
+            if (itemSpawnTimer > 3.5 && Math.random() < 0.1) shouldSpawn = true;
         }
 
-        if (shouldSpawn && itemsSpawnedInWindow < 3) {
+        if (shouldSpawn && itemsSpawnedInWindow < 2) {
             items.push(new Item(x + PLATFORM_WIDTH / 2 - 20, y - 40));
             itemsSpawnedInWindow++;
         }
