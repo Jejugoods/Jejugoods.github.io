@@ -11,7 +11,7 @@ const restartBtn = document.getElementById('restart-btn');
 const GRAVITY = 0.4;
 const JUMP_FORCE = -13; // Increased jump force for larger gaps
 const MOVEMENT_SPEED = 5;
-const PLATFORM_WIDTH = 130; // Further increased width for larger clouds
+const PLATFORM_WIDTH = 90; // Reduced width for challenge (User Feedback)
 const PLATFORM_HEIGHT = 20;
 const PLATFORM_GAP_MIN = 100; // Wider gaps for larger character
 const PLATFORM_GAP_MAX = 190;
@@ -163,9 +163,9 @@ class Player {
         this.scaleX = 0.8; // Thin
         this.scaleY = 1.3; // Tall (Stretch on jump)
 
-        // Create dust particles (More for impact)
-        for (let i = 0; i < 15; i++) {
-            particles.push(new Particle(this.x + this.width / 2, this.y + this.height));
+        // Create dust particles (Enhanced cloud effect)
+        for (let i = 0; i < 30; i++) {
+            particles.push(new Particle(this.x + this.width / 2, this.y + this.height - 10));
         }
     }
 }
@@ -205,30 +205,32 @@ class Platform {
     }
 }
 
-// Particle Class (Sparkles/Dust)
+// Particle Class (Dust Clouds)
 class Particle {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.size = Math.random() * 5 + 2;
-        this.vx = Math.random() * 2 - 1;
-        this.vy = Math.random() * 2 - 1;
+        this.size = Math.random() * 10 + 5; // Initial size diversity
+        this.vx = (Math.random() - 0.5) * 6; // Spread wider horizontally
+        this.vy = Math.random() * 3 + 1; // Move mostly downwards slightly for dust kick
         this.alpha = 1;
-        this.color = Math.random() < 0.5 ? '#ffffff' : '#f1c40f'; // White or Gold sparkles
+        this.color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`; // White/Cloudy
     }
     update() {
         this.x += this.vx;
-        this.y += this.vy;
-        this.alpha -= 0.05;
+        this.y += this.vy * 0.5; // Slower fall/rise
+        this.alpha -= 0.03; // Fade out faster
+        this.size += 0.2; // Expand like smoke
     }
     draw() {
+        ctx.save();
         ctx.globalAlpha = this.alpha;
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        // Star shape or circle
+        // Soft circles for dust
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1;
+        ctx.restore();
     }
 }
 
