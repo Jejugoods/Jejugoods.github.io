@@ -13,15 +13,56 @@ const JUMP_FORCE = -11;
 const MOVEMENT_SPEED = 5;
 const PLATFORM_WIDTH = 70;
 const PLATFORM_HEIGHT = 20;
-const PLATFORM_GAP_MIN = 60;
-const PLATFORM_GAP_MAX = 130;
+const PLATFORM_GAP_MIN = 40; // Reduced from 60
+const PLATFORM_GAP_MAX = 100; // Reduced from 130
 
-// Assets
+// Assets (Using Imagebitmap for cleaner handling potentially, or just Image)
 const tigerImg = new Image();
-tigerImg.src = 'assets/tiger.png';
 const platformImg = new Image();
-platformImg.src = 'assets/platform.png';
 const backgroundImg = new Image();
+
+// Helper to remove white background
+function createTransparentImage(src, callback) {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = src;
+    img.onload = () => {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = img.width;
+        tempCanvas.height = img.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(img, 0, 0);
+
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const data = imageData.data;
+
+        // Loop through pixels
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            // If white or very light grey
+            if (r > 240 && g > 240 && b > 240) {
+                data[i + 3] = 0; // Set alpha to 0
+            }
+        }
+
+        tempCtx.putImageData(imageData, 0, 0);
+        const newImg = new Image();
+        newImg.src = tempCanvas.toDataURL();
+        callback(newImg);
+    };
+}
+
+// Load and process images
+createTransparentImage('assets/tiger.png', (processedImg) => {
+    tigerImg.src = processedImg.src;
+});
+
+createTransparentImage('assets/platform.png', (processedImg) => {
+    platformImg.src = processedImg.src;
+});
+
 backgroundImg.src = 'assets/background.png';
 
 // Game State
@@ -92,8 +133,7 @@ class Player {
         if (!this.facingRight) ctx.scale(-1, 1);
 
         // Draw Image
-        // If image not loaded yet, fallback to placeholder? (Usually fast enough)
-        if (tigerImg.complete) {
+        if (tigerImg.complete && tigerImg.src) {
             ctx.drawImage(tigerImg, -this.width / 2, -this.height / 2, this.width, this.height);
         } else {
             // Fallback
@@ -155,7 +195,7 @@ class Platform {
     }
 
     draw() {
-        if (platformImg.complete) {
+        if (platformImg.complete && platformImg.src) {
             // Draw slightly larger than Hitbox for visual fluff
             ctx.drawImage(platformImg, this.x - 10, this.y - 10, this.width + 20, this.height);
         } else {
@@ -208,22 +248,10 @@ class Particle {
 // Background Drawing
 function drawBackground() {
     if (backgroundImg.complete) {
-        // Parallax effect: The background moves slower than the platforms
-        // Since we don't have infinite vertical image, we can tile it or just clamp it
-        // For simplicity, let's just draw it to cover the screen
-
-        // Option 1: Static background (easiest)
-        // ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-
-        // Option 2: Scrolling (needs seamless texture)
-        // We moved platforms down by 'score', so we can move scrolling background
-        // Let's assume the background image is tall or seamless.
-        // For now, let's fill the screen, maintaining aspect ratio or covering
-
-        // Just draw it covering the canvas
-        // ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-
-        // Better: Draw resizing to fill height, center width
+        // Simple parallax logic:
+        // Background moves very slowly based on player vertical position
+        // This is tricky with infinite scroll without repeating image
+        // Just fill screen for now
         const scale = Math.max(canvas.width / backgroundImg.width, canvas.height / backgroundImg.height);
         const x = (canvas.width / 2) - (backgroundImg.width / 2) * scale;
         const y = (canvas.height / 2) - (backgroundImg.height / 2) * scale;
