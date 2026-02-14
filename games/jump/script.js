@@ -472,7 +472,16 @@ function initGame() {
     // Create initial platforms
     let y = canvas.height - 100;
     while (y > 0) {
-        let x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+        let x;
+        // Keep initial clouds centered to avoid hint arrows
+        const sideMargin = 100;
+        const availableWidth = canvas.width - (sideMargin * 2) - PLATFORM_WIDTH;
+        if (availableWidth > 0) {
+            x = sideMargin + Math.random() * availableWidth;
+        } else {
+            x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+        }
+
         platforms.push(new Platform(x, y));
         y -= Math.random() * (PLATFORM_GAP_MAX - PLATFORM_GAP_MIN) + PLATFORM_GAP_MIN;
     }
@@ -610,7 +619,21 @@ function update(timestamp) {
     // Generate new platforms
     while (platforms[platforms.length - 1].y > PLATFORM_GAP_MIN) {
         let y = platforms[platforms.length - 1].y - (Math.random() * (PLATFORM_GAP_MAX - PLATFORM_GAP_MIN) + PLATFORM_GAP_MIN);
-        let x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+
+        let x;
+        // If arrows are showing, keep clouds in the center to avoid overlap
+        if (hintTimer > 0) {
+            const sideMargin = 100;
+            const availableWidth = canvas.width - (sideMargin * 2) - PLATFORM_WIDTH;
+            if (availableWidth > 0) {
+                x = sideMargin + Math.random() * availableWidth;
+            } else {
+                x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+            }
+        } else {
+            x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+        }
+
         platforms.push(new Platform(x, y));
 
         // Spawn Item (10% Chance)

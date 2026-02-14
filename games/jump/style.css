@@ -217,7 +217,9 @@ button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 40px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    overflow: hidden;
     opacity: 1;
     transition: opacity 1s ease;
 }
