@@ -40,27 +40,47 @@ canvas {
     position: absolute;
     top: 20px;
     left: 20px;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
     color: #2d3436;
-    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.8);
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.8);
     padding: 5px 15px;
-    border-radius: 20px;
+    border-radius: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 10;
 }
 
 #timer-display {
     position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 24px;
+    top: 65px;
+    left: 20px;
+    font-size: 20px;
     font-weight: bold;
     color: #d63031;
     background-color: rgba(255, 255, 255, 0.8);
-    padding: 5px 20px;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 5px 15px;
+    border-radius: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+#timer-display.warning {
+    background-color: #fab1a0;
+    color: #ffffff;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(214, 48, 49, 0.5);
+    animation: pulse-red 1s infinite alternate;
+}
+
+@keyframes pulse-red {
+    from {
+        transform: scale(1.1);
+    }
+
+    to {
+        transform: scale(1.2);
+    }
 }
 
 .screen {

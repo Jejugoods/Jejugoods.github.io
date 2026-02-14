@@ -508,7 +508,15 @@ function update(timestamp) {
 
     frameCount++;
     gameTimer -= dt / 1000; // Decrement game timer by actual seconds passed
-    timerElement.innerText = Math.max(0, Math.ceil(gameTimer)); // Display remaining time, rounded up
+    const remainingSeconds = Math.max(0, Math.ceil(gameTimer));
+    timerElement.innerText = remainingSeconds;
+
+    // Highlight when 10s or less
+    if (gameTimer <= 10) {
+        timerElement.parentElement.classList.add('warning');
+    } else {
+        timerElement.parentElement.classList.remove('warning');
+    }
 
     // Clear & Draw Background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
