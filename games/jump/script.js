@@ -8,48 +8,88 @@ const gameOverScreen = document.getElementById('game-over-screen');
 const startBtn = document.getElementById('start-btn');
 const restartBtn = document.getElementById('restart-btn');
 const touchHint = document.getElementById('touch-controls-hint');
+const loadingScreen = document.getElementById('loading-screen');
+const loadingBar = document.getElementById('loading-bar');
 
-// Game Constants
-const GRAVITY = 0.4;
-const JUMP_FORCE = -13; // Increased jump force for larger gaps
-const MOVEMENT_SPEED = 5;
-const PLATFORM_WIDTH = 90; // Reduced width for challenge (User Feedback)
-const PLATFORM_HEIGHT = 20;
-const PLATFORM_GAP_MIN = 100; // Wider gaps for larger character
-const PLATFORM_GAP_MAX = 190;
+// Logical Scale Constants
+const LOGICAL_WIDTH = 480;
+let scaleFactor = 1;
+
+// Base Physics Constants (To be scaled in initGame)
+const BASE_GRAVITY = 0.4;
+const BASE_JUMP_FORCE = -13;
+const BASE_MOVEMENT_SPEED = 5;
+const BASE_PLATFORM_WIDTH = 90;
+const BASE_PLATFORM_HEIGHT = 20;
+const BASE_PLATFORM_GAP_MIN = 100;
+const BASE_PLATFORM_GAP_MAX = 190;
 const BASE_FPS = 60;
 
-// Assets
-const tigerIdleImg = new Image();
-tigerIdleImg.src = 'assets/tiger_idle.png';
-const tigerJumpImg = new Image();
-tigerJumpImg.src = 'assets/tiger_jump.png';
-const tigerFallImg = new Image();
-tigerFallImg.src = 'assets/tiger_fail.png'; // User named it tiger_fail.png
+// Current Scaled Constants
+let GRAVITY, JUMP_FORCE, MOVEMENT_SPEED, PLATFORM_WIDTH, PLATFORM_HEIGHT, PLATFORM_GAP_MIN, PLATFORM_GAP_MAX;
 
+// Assets Tracking
+const assets = {
+    tigerIdle: 'assets/tiger_idle.png',
+    tigerJump: 'assets/tiger_jump.png',
+    tigerFail: 'assets/tiger_fail.png',
+    platform: 'assets/platform.png',
+    background: 'assets/background.png'
+};
+
+const images = {};
+let loadedAssets = 0;
+const totalAssets = Object.keys(assets).length;
+
+function checkAssetsLoaded() {
+    loadedAssets++;
+    const progress = (loadedAssets / totalAssets) * 100;
+    loadingBar.style.width = `${progress}%`;
+
+    if (loadedAssets === totalAssets) {
+        setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+        }, 500);
+    }
+}
+
+// Load Assets
+const tigerIdleImg = new Image();
+const tigerJumpImg = new Image();
+const tigerFallImg = new Image();
 const platformImg = new Image();
-platformImg.src = 'assets/platform.png';
 const backgroundImg = new Image();
-backgroundImg.src = 'assets/background.png';
+
+tigerIdleImg.onload = checkAssetsLoaded;
+tigerJumpImg.onload = checkAssetsLoaded;
+tigerFallImg.onload = checkAssetsLoaded;
+platformImg.onload = checkAssetsLoaded;
+backgroundImg.onload = checkAssetsLoaded;
+
+tigerIdleImg.src = assets.tigerIdle;
+tigerJumpImg.src = assets.tigerJump;
+tigerFallImg.src = assets.tigerFail;
+platformImg.src = assets.platform;
+backgroundImg.src = assets.background;
 
 // Game State
-let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
+let gameState = 'MENU';
 let score = 0;
 let platforms = [];
-let items = []; // Active items in the world
+let items = [];
 let particles = [];
 let keys = {
     ArrowLeft: false,
     ArrowRight: false
 };
-let frameCount = 0; // For animation
+let frameCount = 0;
 let lastTime = 0;
-let gameTimer = 30; // 30 seconds initial
-let hintTimer = 10; // 10 seconds for touch hint
+let gameTimer = 30;
+let hintTimer = 10;
 
 // Item Effects State
 let activeEffects = {
-    superJump: 0,   // Duration in frames
+    superJump: 0,
     doubleScore: 0,
     dizzy: 0,
     fastSpeed: 0
@@ -89,15 +129,13 @@ window.addEventListener('touchend', () => {
 // Player Class (White Tiger - Animated Sprite)
 class Player {
     constructor() {
-        this.width = 135; // Increased to 1.5x of 90px
-        this.height = 135;
+        this.width = 135 * scaleFactor;
+        this.height = 135 * scaleFactor;
         this.x = canvas.width / 2 - this.width / 2;
-        this.y = canvas.height - 150;
+        this.y = canvas.height - 150 * scaleFactor;
         this.vx = 0;
         this.vy = 0;
         this.facingRight = true;
-
-        // Animation scales (Squash & Stretch)
         this.scaleX = 1;
         this.scaleY = 1;
     }
@@ -217,12 +255,8 @@ class Item {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.width = 40;
-        this.height = 40;
-        this.type = 'random'; // Initial state is unknown
-        // this.collected = false; // Removed as per instruction
-
-        // Floating animation
+        this.width = 40 * scaleFactor;
+        this.height = 40 * scaleFactor;
         this.floatOffset = 0;
     }
 
@@ -284,10 +318,10 @@ class Platform {
         this.x = x;
         this.y = y;
         this.width = PLATFORM_WIDTH;
-        this.height = PLATFORM_HEIGHT * 2.5; // Taller for image aspect ratio
-        this.hitboxHeight = 20;
+        this.height = PLATFORM_HEIGHT * 2.5;
+        this.hitboxHeight = PLATFORM_HEIGHT;
         this.type = Math.random() < 0.1 ? 'moving' : 'normal';
-        this.vx = this.type === 'moving' ? (Math.random() < 0.5 ? 2 : -2) : 0;
+        this.vx = this.type === 'moving' ? (Math.random() < 0.5 ? 2 * scaleFactor : -2 * scaleFactor) : 0;
     }
 
     draw() {
@@ -318,9 +352,9 @@ class Particle {
     constructor(x, y, color) {
         this.x = x;
         this.y = y;
-        this.size = Math.random() * 15 + 10; // Larger starting size for "clouds"
-        this.vx = (Math.random() - 0.5) * 8; // Wider horizontal spread
-        this.vy = Math.random() * 2 - 1; // More vertical variety
+        this.size = (Math.random() * 15 + 10) * scaleFactor; // Larger starting size for "clouds"
+        this.vx = (Math.random() - 0.5) * 8 * scaleFactor; // Wider horizontal spread
+        this.vy = (Math.random() * 2 - 1) * scaleFactor; // More vertical variety
         this.alpha = 1;
 
         // Use provided color or default white-ish
@@ -333,7 +367,7 @@ class Particle {
         this.vx *= Math.pow(0.96, dtScalar); // Slow down
         this.vy *= Math.pow(0.96, dtScalar);
         this.alpha -= 0.02 * dtScalar; // Fading
-        this.size += 0.5 * dtScalar; // Expanding smoke
+        this.size += 0.5 * scaleFactor * dtScalar; // Expanding smoke
     }
 
     draw() {
@@ -371,9 +405,9 @@ function createBurstParticles(x, y, color) {
 
     for (let i = 0; i < 15; i++) {
         let p = new Particle(x, y, rgb);
-        p.vy = (Math.random() - 0.5) * 12;
-        p.vx = (Math.random() - 0.5) * 12;
-        p.size = Math.random() * 20 + 10;
+        p.vy = (Math.random() - 0.5) * 12 * scaleFactor;
+        p.vx = (Math.random() - 0.5) * 12 * scaleFactor;
+        p.size = (Math.random() * 20 + 10) * scaleFactor;
         particles.push(p);
     }
 }
@@ -453,6 +487,19 @@ let player = new Player();
 function initGame() {
     canvas.width = window.innerWidth > 480 ? 480 : window.innerWidth;
     canvas.height = window.innerHeight;
+
+    // Update Scale Factor based on width
+    scaleFactor = canvas.width / LOGICAL_WIDTH;
+
+    // Update Scaled Constants
+    GRAVITY = BASE_GRAVITY * scaleFactor;
+    JUMP_FORCE = BASE_JUMP_FORCE * scaleFactor;
+    MOVEMENT_SPEED = BASE_MOVEMENT_SPEED * scaleFactor;
+    PLATFORM_WIDTH = BASE_PLATFORM_WIDTH * scaleFactor;
+    PLATFORM_HEIGHT = BASE_PLATFORM_HEIGHT * scaleFactor;
+    PLATFORM_GAP_MIN = BASE_PLATFORM_GAP_MIN * scaleFactor;
+    PLATFORM_GAP_MAX = BASE_PLATFORM_GAP_MAX * scaleFactor;
+
     player = new Player();
     platforms = [];
     items = [];
@@ -623,7 +670,7 @@ function update(timestamp) {
         let x;
         // If arrows are showing, keep clouds in the center to avoid overlap
         if (hintTimer > 0) {
-            const sideMargin = 100;
+            const sideMargin = 100 * scaleFactor;
             const availableWidth = canvas.width - (sideMargin * 2) - PLATFORM_WIDTH;
             if (availableWidth > 0) {
                 x = sideMargin + Math.random() * availableWidth;
