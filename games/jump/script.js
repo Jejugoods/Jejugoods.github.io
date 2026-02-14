@@ -30,7 +30,6 @@ let GRAVITY, JUMP_FORCE, MOVEMENT_SPEED, PLATFORM_WIDTH, PLATFORM_HEIGHT, PLATFO
 
 // Assets Tracking
 const assets = {
-    tigerIdle: 'assets/tiger_idle.png',
     tigerJump: 'assets/tiger_jump.png',
     tigerFail: 'assets/tiger_fail.png',
     platform: 'assets/platform.png',
@@ -54,19 +53,21 @@ function checkAssetsLoaded() {
 }
 
 // Load Assets
-const tigerIdleImg = new Image();
 const tigerJumpImg = new Image();
 const tigerFallImg = new Image();
 const platformImg = new Image();
 const backgroundImg = new Image();
 
-tigerIdleImg.onload = checkAssetsLoaded;
 tigerJumpImg.onload = checkAssetsLoaded;
 tigerFallImg.onload = checkAssetsLoaded;
 platformImg.onload = checkAssetsLoaded;
 backgroundImg.onload = checkAssetsLoaded;
 
-tigerIdleImg.src = assets.tigerIdle;
+tigerJumpImg.onerror = checkAssetsLoaded;
+tigerFallImg.onerror = checkAssetsLoaded;
+platformImg.onerror = checkAssetsLoaded;
+backgroundImg.onerror = checkAssetsLoaded;
+
 tigerJumpImg.src = assets.tigerJump;
 tigerFallImg.src = assets.tigerFail;
 platformImg.src = assets.platform;
