@@ -13,11 +13,14 @@ const JUMP_FORCE = -11;
 const MOVEMENT_SPEED = 5;
 const PLATFORM_WIDTH = 70;
 const PLATFORM_HEIGHT = 20;
-const PLATFORM_GAP_MIN = 60; // Adjusted for better playability
-const PLATFORM_GAP_MAX = 110; // Slightly reduced max gap
+const PLATFORM_GAP_MIN = 50; // Balanced gap
+const PLATFORM_GAP_MAX = 110;
 
 // Assets
-// Background is kept as image
+const tigerImg = new Image();
+tigerImg.src = 'assets/tiger.png';
+const platformImg = new Image();
+platformImg.src = 'assets/platform.png';
 const backgroundImg = new Image();
 backgroundImg.src = 'assets/background.png';
 
@@ -63,23 +66,11 @@ window.addEventListener('touchend', () => {
     keys.ArrowRight = false;
 });
 
-// Utility: Draw Stripe (for Tiger)
-function drawStripe(ctx, x, y, length, angle, width = 3) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    ctx.fillStyle = 'black';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, length, width, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-}
-
-// Player Class (White Tiger - Canvas Drawn)
+// Player Class (White Tiger - Image Based)
 class Player {
     constructor() {
-        this.width = 50;
-        this.height = 50;
+        this.width = 60; // Standard size for sprite
+        this.height = 60;
         this.x = canvas.width / 2 - this.width / 2;
         this.y = canvas.height - 150;
         this.vx = 0;
@@ -100,109 +91,16 @@ class Player {
         ctx.translate(centerX, centerY);
         if (!this.facingRight) ctx.scale(-1, 1);
 
-        // --- Body ---
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.ellipse(0, 5, 20, 18, 0, 0, Math.PI * 2); // Chubby body
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#2d3436';
-        ctx.stroke();
-
-        // Body Stripes
-        drawStripe(ctx, -5, 5, 4, Math.PI / 4);
-        drawStripe(ctx, 0, 5, 4, 0);
-        drawStripe(ctx, 5, 5, 4, -Math.PI / 4);
-
-        // --- Head ---
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(0, -10, 18, 0, Math.PI * 2); // Big head
-        ctx.fill();
-        ctx.stroke();
-
-        // Ears
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(-12, -22, 6, 0, Math.PI * 2); // Left ear
-        ctx.arc(12, -22, 6, 0, Math.PI * 2);  // Right ear
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#ff7675'; // Pink inside ears
-        ctx.beginPath();
-        ctx.arc(-12, -22, 3, 0, Math.PI * 2);
-        ctx.arc(12, -22, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Head Stripes (Forehead)
-        drawStripe(ctx, 0, -22, 4, Math.PI / 2, 2);
-        drawStripe(ctx, -8, -18, 3, Math.PI / 4, 1.5);
-        drawStripe(ctx, 8, -18, 3, -Math.PI / 4, 1.5);
-
-        // Face
-        // Eyes
-        ctx.fillStyle = '#fdcb6e'; // Golden eyes
-        ctx.beginPath();
-        ctx.arc(-7, -10, 4, 0, Math.PI * 2);
-        ctx.arc(7, -10, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'black'; // Pupils
-        ctx.beginPath();
-        ctx.arc(-7, -10, 2, 0, Math.PI * 2);
-        ctx.arc(7, -10, 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Nose & Mouth
-        ctx.fillStyle = '#ff7675';
-        ctx.beginPath();
-        ctx.arc(0, -4, 2.5, 0, Math.PI * 2); // Nose
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(0, -4);
-        ctx.lineTo(-3, 0);
-        ctx.moveTo(0, -4);
-        ctx.lineTo(3, 0); // Cat mouth
-        ctx.stroke();
-
-        // Cheeks
-        ctx.fillStyle = 'rgba(255, 118, 117, 0.4)';
-        ctx.beginPath();
-        ctx.arc(-12, -5, 3, 0, Math.PI * 2);
-        ctx.arc(12, -5, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // --- Paws ---
-        ctx.fillStyle = '#ffffff';
-        // Hands
-        ctx.beginPath();
-        ctx.arc(-15, 5, 5, 0, Math.PI * 2);
-        ctx.arc(15, 5, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        // Feet (if jumping vs standing)
-        ctx.beginPath();
-        ctx.arc(-10, 20, 6, 0, Math.PI * 2);
-        ctx.arc(10, 20, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // --- Tail ---
-        ctx.strokeStyle = '#2d3436';
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(15, 15);
-        ctx.quadraticCurveTo(25, 20, 25, 10);
-        ctx.stroke();
-        // Tail stripe
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(22, 18);
-        ctx.lineTo(24, 16);
-        ctx.stroke();
+        // Draw Image
+        if (tigerImg.complete) {
+            ctx.drawImage(tigerImg, -this.width / 2, -this.height / 2, this.width, this.height);
+        } else {
+            // Fallback
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
@@ -243,44 +141,29 @@ class Player {
     }
 }
 
-// Platform Class (Clouds - Canvas Drawn)
+// Platform Class (Clouds - Image Based)
 class Platform {
     constructor(x, y) {
         this.x = x;
         this.y = y;
         this.width = PLATFORM_WIDTH;
-        this.height = PLATFORM_HEIGHT;
+        this.height = PLATFORM_HEIGHT * 2.5; // Taller for image aspect ratio
         this.hitboxHeight = 20;
         this.type = Math.random() < 0.1 ? 'moving' : 'normal';
         this.vx = this.type === 'moving' ? (Math.random() < 0.5 ? 2 : -2) : 0;
     }
 
     draw() {
-        // Cloud Drawing (Minhwa Style)
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#74b9ff'; // Light blue outline
-        ctx.lineWidth = 2;
-
-        // Main cloud shape (3 puffy circles)
-        ctx.beginPath();
-
-        // Left
-        ctx.arc(this.x + 10, this.y + 10, 15, 0, Math.PI * 2);
-        // Middle (Higher)
-        ctx.arc(this.x + this.width / 2, this.y + 5, 20, 0, Math.PI * 2);
-        // Right
-        ctx.arc(this.x + this.width - 10, this.y + 10, 15, 0, Math.PI * 2);
-
-        ctx.fill();
-        ctx.stroke();
-
-        // Moving platform indicator
-        if (this.type === 'moving') {
-            ctx.fillStyle = '#81ecec';
-            ctx.beginPath();
-            ctx.arc(this.x + this.width / 2, this.y + 10, 5, 0, Math.PI * 2);
-            ctx.fill();
+        if (platformImg.complete) {
+            // Draw slightly larger than Hitbox for visual fluff
+            ctx.drawImage(platformImg, this.x - 10, this.y - 10, this.width + 20, this.height);
+        } else {
+            // Fallback
+            ctx.fillStyle = '#dfe6e9';
+            ctx.fillRect(this.x, this.y, this.width, this.hitboxHeight);
         }
+
+        // Moving platform indicator (visual only)
     }
 
     update() {
@@ -320,7 +203,7 @@ class Particle {
     }
 }
 
-// Background Drawing (Using User Image)
+// Background Drawing
 function drawBackground() {
     if (backgroundImg.complete) {
         // Just fill screen, covering nicely
@@ -389,12 +272,13 @@ function update() {
         p.draw();
 
         // Collision Check (Only when falling)
+        // Check against the hitbox (top part of the image)
         if (
             player.vy > 0 &&
             player.x + player.width * 0.7 > p.x &&
             player.x + player.width * 0.3 < p.x + p.width &&
             player.y + player.height * 0.8 > p.y &&
-            player.y + player.height * 0.8 < p.y + p.hitboxHeight
+            player.y + player.height * 0.8 < p.y + p.hitboxHeight + 15
         ) {
             player.jump();
         }
@@ -454,6 +338,7 @@ window.addEventListener('resize', () => {
 // Initial Setup
 canvas.width = window.innerWidth > 480 ? 480 : window.innerWidth;
 canvas.height = window.innerHeight;
+// Draw generic background on load (wait for image?)
 backgroundImg.onload = () => {
     if (gameState === 'MENU') drawBackground();
 };
