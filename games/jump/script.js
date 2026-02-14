@@ -1,6 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
+const timerElement = document.getElementById('timer');
 const finalScoreElement = document.getElementById('final-score');
 const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
@@ -15,6 +16,7 @@ const PLATFORM_WIDTH = 90; // Reduced width for challenge (User Feedback)
 const PLATFORM_HEIGHT = 20;
 const PLATFORM_GAP_MIN = 100; // Wider gaps for larger character
 const PLATFORM_GAP_MAX = 190;
+const BASE_FPS = 60;
 
 // Assets
 const tigerIdleImg = new Image();
@@ -40,12 +42,15 @@ let keys = {
     ArrowRight: false
 };
 let frameCount = 0; // For animation
+let lastTime = 0;
+let gameTimer = 30; // 30 seconds initial
 
 // Item Effects State
 let activeEffects = {
     superJump: 0,   // Duration in frames
     doubleScore: 0,
-    dizzy: 0
+    dizzy: 0,
+    fastSpeed: 0
 };
 
 // Input Handling
@@ -140,34 +145,36 @@ class Player {
         ctx.restore();
     }
 
-    update() {
+    update(dtScalar) {
         // Handle Control Inversion (Dizzy Effect)
         let leftInput = keys.ArrowLeft;
         let rightInput = keys.ArrowRight;
 
         if (activeEffects.dizzy > 0) {
             // Swap inputs
-            leftInput = keys.ArrowRight;
-            rightInput = keys.ArrowLeft;
+            [leftInput, rightInput] = [rightInput, leftInput];
         }
 
         // Horizontal Movement
+        let speed = MOVEMENT_SPEED;
+        if (activeEffects.fastSpeed > 0) speed *= 2;
+
         if (leftInput) {
-            this.vx = -MOVEMENT_SPEED;
+            this.vx = -speed;
         } else if (rightInput) {
-            this.vx = MOVEMENT_SPEED;
+            this.vx = speed;
         } else {
-            this.vx *= 0.8; // Friction
+            this.vx *= Math.pow(0.8, dtScalar); // Friction
         }
-        this.x += this.vx;
+        this.x += this.vx * dtScalar;
 
         // Vertical Movement
-        this.vy += GRAVITY;
-        this.y += this.vy;
+        this.vy += GRAVITY * dtScalar;
+        this.y += this.vy * dtScalar;
 
         // Restore scale (Elastic effect)
-        this.scaleX += (1 - this.scaleX) * 0.1;
-        this.scaleY += (1 - this.scaleY) * 0.1;
+        this.scaleX += (1 - this.scaleX) * 0.1 * dtScalar;
+        this.scaleY += (1 - this.scaleY) * 0.1 * dtScalar;
 
         // Floor collision (only for start)
         if (this.y + this.height > canvas.height && score === 0) {
@@ -211,14 +218,14 @@ class Item {
         this.width = 40;
         this.height = 40;
         this.type = 'random'; // Initial state is unknown
-        this.collected = false;
+        // this.collected = false; // Removed as per instruction
 
         // Floating animation
         this.floatOffset = 0;
     }
 
     draw() {
-        if (this.collected) return;
+        // if (this.collected) return; // Removed as per instruction
 
         this.floatOffset = Math.sin(frameCount * 0.1) * 5;
         const renderY = this.y + this.floatOffset;
@@ -294,9 +301,9 @@ class Platform {
         // Moving platform indicator (visual only)
     }
 
-    update() {
+    update(dtScalar) {
         if (this.type === 'moving') {
-            this.x += this.vx;
+            this.x += this.vx * dtScalar;
             if (this.x < 0 || this.x + this.width > canvas.width) {
                 this.vx *= -1;
             }
@@ -309,24 +316,41 @@ class Particle {
     constructor(x, y, color) {
         this.x = x;
         this.y = y;
-        this.size = Math.random() * 10 + 5; // Initial size diversity
-        this.vx = (Math.random() - 0.5) * 6; // Spread wider horizontally
-        this.vy = Math.random() * 3 + 1; // Move mostly downwards slightly for dust kick
+        this.size = Math.random() * 15 + 10; // Larger starting size for "clouds"
+        this.vx = (Math.random() - 0.5) * 8; // Wider horizontal spread
+        this.vy = Math.random() * 2 - 1; // More vertical variety
         this.alpha = 1;
-        this.color = color || `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`; // White/Cloudy
+
+        // Use provided color or default white-ish
+        this.baseColor = color || '255, 255, 255';
     }
-    update() {
-        this.x += this.vx;
-        this.y += this.vy * 0.5; // Slower fall/rise
-        this.alpha -= 0.03; // Fade out faster
-        this.size += 0.2; // Expand like smoke
+
+    update(dtScalar) {
+        this.x += this.vx * dtScalar;
+        this.y += this.vy * dtScalar;
+        this.vx *= Math.pow(0.96, dtScalar); // Slow down
+        this.vy *= Math.pow(0.96, dtScalar);
+        this.alpha -= 0.02 * dtScalar; // Fading
+        this.size += 0.5 * dtScalar; // Expanding smoke
     }
+
     draw() {
+        if (this.alpha <= 0) return;
+
         ctx.save();
         ctx.globalAlpha = this.alpha;
-        ctx.fillStyle = this.color;
+
+        // Radial gradient for soft edges (No hard borders!)
+        const gradient = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size
+        );
+        gradient.addColorStop(0, `rgba(${this.baseColor}, 0.6)`);
+        gradient.addColorStop(0.4, `rgba(${this.baseColor}, 0.2)`);
+        gradient.addColorStop(1, `rgba(${this.baseColor}, 0)`);
+
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        // Soft circles for dust
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
@@ -335,10 +359,19 @@ class Particle {
 
 // Helper to spawn a burst of particles
 function createBurstParticles(x, y, color) {
-    for (let i = 0; i < 10; i++) {
-        let p = new Particle(x, y, color);
-        p.vy = (Math.random() - 0.5) * 10; // Explode out
-        p.vx = (Math.random() - 0.5) * 10;
+    // If color is hex, convert to RGB for the gradient class
+    let rgb = '255, 255, 255';
+    if (color === '#ff7675') rgb = '255, 118, 117'; // Super Jump Pink
+    if (color === '#fdcb6e') rgb = '253, 203, 110'; // Gold
+    if (color === '#fab1a0') rgb = '250, 177, 160'; // Peach
+    if (color === '#a29bfe') rgb = '162, 155, 254'; // Purple
+    if (color === '#55efc4') rgb = '85, 239, 196'; // Mint Green for Fast Speed
+
+    for (let i = 0; i < 15; i++) {
+        let p = new Particle(x, y, rgb);
+        p.vy = (Math.random() - 0.5) * 12;
+        p.vx = (Math.random() - 0.5) * 12;
+        p.size = Math.random() * 20 + 10;
         particles.push(p);
     }
 }
@@ -369,7 +402,6 @@ function drawUI() {
 
     // Helper for background
     const drawEffectBox = (title, desc, color, y) => {
-        const padding = 10;
         const boxWidth = 220;
         const boxHeight = 50;
         const x = canvas.width - 10;
@@ -386,30 +418,30 @@ function drawUI() {
         // Title
         ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
         ctx.fillStyle = color;
-        ctx.fillText(title, x - padding, y);
+        ctx.fillText(title, x - 10, y);
 
         // Description
         ctx.font = '14px "Noto Sans KR", sans-serif';
         ctx.fillStyle = '#ffffff'; // White for readability
-        ctx.fillText(desc, x - padding, y + 20);
+        ctx.fillText(desc, x - 10, y + 20);
     };
 
     if (activeEffects.superJump > 0) {
-        const seconds = Math.ceil(activeEffects.superJump / 60);
-        drawEffectBox(`🚀 슈퍼 점프: ${seconds}초`, '점프력이 엄청 높아져요!', '#fdcb6e', yPos);
+        drawEffectBox(`🚀 슈퍼 점프: ${Math.ceil(activeEffects.superJump / 60)}초`, '점프력이 높아져요!', '#fdcb6e', yPos);
         yPos += 60;
     }
     if (activeEffects.doubleScore > 0) {
-        const seconds = Math.ceil(activeEffects.doubleScore / 60);
-        drawEffectBox(`💰 점수 2배: ${seconds}초`, '점수가 팍팍 오릅니다!', '#fab1a0', yPos);
+        drawEffectBox(`💰 점수 2배: ${Math.ceil(activeEffects.doubleScore / 60)}초`, '점수가 팍팍 올라요!', '#fab1a0', yPos);
         yPos += 60;
     }
     if (activeEffects.dizzy > 0) {
-        const seconds = Math.ceil(activeEffects.dizzy / 60);
-        drawEffectBox(`💫 어지러움: ${seconds}초`, '좌우 방향이 반대예요!', '#a29bfe', yPos);
+        drawEffectBox(`💫 어지러움: ${Math.ceil(activeEffects.dizzy / 60)}초`, '조작이 반대로 바뀌어요!', '#a29bfe', yPos);
         yPos += 60;
     }
-
+    if (activeEffects.fastSpeed > 0) {
+        drawEffectBox(`🌪️ 광풍: ${Math.ceil(activeEffects.fastSpeed / 60)}초`, '속도가 너무 빨라요!', '#55efc4', yPos);
+        yPos += 60;
+    }
     ctx.textAlign = 'start'; // Reset
 }
 
@@ -423,13 +455,16 @@ function initGame() {
     platforms = [];
     items = [];
     score = 0;
+    gameTimer = 30;
+    lastTime = 0;
     scoreElement.innerText = 0;
 
     // Reset effects
     activeEffects = {
         superJump: 0,
         doubleScore: 0,
-        dizzy: 0
+        dizzy: 0,
+        fastSpeed: 0
     };
 
     // Create initial platforms
@@ -443,36 +478,50 @@ function initGame() {
 
 function activateRandomEffect() {
     const rand = Math.random();
-    if (rand < 0.33) {
+    gameTimer += 10; // Add 10 seconds on any collection
+    if (rand < 0.25) {
         // Super Jump (8 seconds)
         activeEffects.superJump = 60 * 8;
         createBurstParticles(player.x + player.width / 2, player.y, '#fdcb6e');
-    } else if (rand < 0.66) {
+    } else if (rand < 0.50) {
         // Double Score (10 seconds)
         activeEffects.doubleScore = 60 * 10;
         createBurstParticles(player.x + player.width / 2, player.y, '#fab1a0');
-    } else {
+    } else if (rand < 0.75) {
         // Dizzy (Poison) (5 seconds)
         activeEffects.dizzy = 60 * 5;
         createBurstParticles(player.x + player.width / 2, player.y, '#a29bfe');
+    } else {
+        // Fast Speed (Poison) (5 seconds)
+        activeEffects.fastSpeed = 60 * 5;
+        createBurstParticles(player.x + player.width / 2, player.y, '#55efc4');
     }
 }
 
-function update() {
-    frameCount++;
+function update(timestamp) {
     if (gameState !== 'PLAYING') return;
+
+    if (!lastTime) lastTime = timestamp;
+    const dt = timestamp - lastTime; // Delta time in milliseconds
+    lastTime = timestamp;
+    const dtScalar = dt / (1000 / BASE_FPS); // Normalize to 60 FPS
+
+    frameCount++;
+    gameTimer -= dt / 1000; // Decrement game timer by actual seconds passed
+    timerElement.innerText = Math.max(0, Math.ceil(gameTimer)); // Display remaining time, rounded up
 
     // Clear & Draw Background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackground();
 
     // Decrement Effect Timers
-    if (activeEffects.superJump > 0) activeEffects.superJump--;
-    if (activeEffects.doubleScore > 0) activeEffects.doubleScore--;
-    if (activeEffects.dizzy > 0) activeEffects.dizzy--;
+    if (activeEffects.superJump > 0) activeEffects.superJump -= dtScalar;
+    if (activeEffects.doubleScore > 0) activeEffects.doubleScore -= dtScalar;
+    if (activeEffects.dizzy > 0) activeEffects.dizzy -= dtScalar;
+    if (activeEffects.fastSpeed > 0) activeEffects.fastSpeed -= dtScalar;
 
     // Update & Draw Player
-    player.update();
+    player.update(dtScalar);
     player.draw();
 
     // Move Camera (Scroll platforms down if player goes up high)
@@ -497,7 +546,7 @@ function update() {
 
     // Platform Management
     platforms.forEach((p, index) => {
-        p.update();
+        p.update(dtScalar);
         p.draw();
 
         // Collision Check (Only when falling)
@@ -555,7 +604,7 @@ function update() {
 
     // Particles
     particles.forEach((p, i) => {
-        p.update();
+        p.update(dtScalar);
         p.draw();
         if (p.alpha <= 0) particles.splice(i, 1);
     });
@@ -564,11 +613,11 @@ function update() {
     drawUI();
 
     // Game Over Check
-    if (player.y > canvas.height) {
+    if (player.y > canvas.height || gameTimer <= 0) {
         gameOver();
+    } else {
+        requestAnimationFrame(update);
     }
-
-    requestAnimationFrame(update);
 }
 
 function startGame() {
@@ -576,7 +625,7 @@ function startGame() {
     startScreen.classList.remove('active');
     gameOverScreen.classList.remove('active');
     initGame();
-    update();
+    requestAnimationFrame(update);
 }
 
 function gameOver() {
