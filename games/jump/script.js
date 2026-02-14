@@ -9,12 +9,12 @@ const restartBtn = document.getElementById('restart-btn');
 
 // Game Constants
 const GRAVITY = 0.4;
-const JUMP_FORCE = -11;
+const JUMP_FORCE = -13; // Increased jump force for larger gaps
 const MOVEMENT_SPEED = 5;
-const PLATFORM_WIDTH = 70;
+const PLATFORM_WIDTH = 130; // Further increased width for larger clouds
 const PLATFORM_HEIGHT = 20;
-const PLATFORM_GAP_MIN = 50; // Balanced gap
-const PLATFORM_GAP_MAX = 110;
+const PLATFORM_GAP_MIN = 100; // Wider gaps for larger character
+const PLATFORM_GAP_MAX = 190;
 
 // Assets
 const tigerIdleImg = new Image();
@@ -74,13 +74,17 @@ window.addEventListener('touchend', () => {
 // Player Class (White Tiger - Animated Sprite)
 class Player {
     constructor() {
-        this.width = 90; // Increased from 60 based on user feedback
-        this.height = 90;
+        this.width = 135; // Increased to 1.5x of 90px
+        this.height = 135;
         this.x = canvas.width / 2 - this.width / 2;
         this.y = canvas.height - 150;
         this.vx = 0;
         this.vy = 0;
         this.facingRight = true;
+
+        // Animation scales (Squash & Stretch)
+        this.scaleX = 1;
+        this.scaleY = 1;
     }
 
     draw() {
@@ -94,14 +98,16 @@ class Player {
         const centerY = this.y + this.height / 2;
 
         ctx.translate(centerX, centerY);
-        if (!this.facingRight) ctx.scale(-1, 1);
+
+        // Apply Squash & Stretch + Facing Direction
+        // If facing left, scaleX should be negative relative to the base scale
+        const dir = this.facingRight ? 1 : -1;
+        ctx.scale(this.scaleX * dir, this.scaleY);
 
         // Determine Sprite based on state
-        let spriteToDraw = tigerIdleImg; // Default Idle
+        let spriteToDraw = tigerJumpImg; // Default to Jump (Ready state) looks better than Idle
 
-        if (this.vy < -0.5) {
-            spriteToDraw = tigerJumpImg; // Jumping up
-        } else if (this.vy > 0.5) {
+        if (this.vy > 0.5) {
             spriteToDraw = tigerFallImg; // Falling down
         }
 
@@ -134,6 +140,10 @@ class Player {
         this.vy += GRAVITY;
         this.y += this.vy;
 
+        // Restore scale (Elastic effect)
+        this.scaleX += (1 - this.scaleX) * 0.1;
+        this.scaleY += (1 - this.scaleY) * 0.1;
+
         // Floor collision (only for start)
         if (this.y + this.height > canvas.height && score === 0) {
             this.y = canvas.height - this.height;
@@ -148,8 +158,13 @@ class Player {
 
     jump() {
         this.vy = JUMP_FORCE;
-        // Create dust particles
-        for (let i = 0; i < 5; i++) {
+
+        // Squash & Stretch Impact
+        this.scaleX = 0.8; // Thin
+        this.scaleY = 1.3; // Tall (Stretch on jump)
+
+        // Create dust particles (More for impact)
+        for (let i = 0; i < 15; i++) {
             particles.push(new Particle(this.x + this.width / 2, this.y + this.height));
         }
     }
