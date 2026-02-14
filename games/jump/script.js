@@ -16,6 +16,14 @@ const PLATFORM_HEIGHT = 20;
 const PLATFORM_GAP_MIN = 60;
 const PLATFORM_GAP_MAX = 130;
 
+// Assets
+const tigerImg = new Image();
+tigerImg.src = 'assets/tiger.png';
+const platformImg = new Image();
+platformImg.src = 'assets/platform.png';
+const backgroundImg = new Image();
+backgroundImg.src = 'assets/background.png';
+
 // Game State
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
 let score = 0;
@@ -58,23 +66,11 @@ window.addEventListener('touchend', () => {
     keys.ArrowRight = false;
 });
 
-// Utility: Draw Stripe
-function drawStripe(ctx, x, y, length, angle, width = 3) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    ctx.fillStyle = 'black';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, length, width, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-}
-
 // Player Class (White Tiger)
 class Player {
     constructor() {
-        this.width = 50;
-        this.height = 50;
+        this.width = 60; // Slightly larger for image visibility
+        this.height = 60;
         this.x = canvas.width / 2 - this.width / 2;
         this.y = canvas.height - 150;
         this.vx = 0;
@@ -95,109 +91,17 @@ class Player {
         ctx.translate(centerX, centerY);
         if (!this.facingRight) ctx.scale(-1, 1);
 
-        // --- Body ---
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.ellipse(0, 5, 20, 18, 0, 0, Math.PI * 2); // Chubby body
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#2d3436';
-        ctx.stroke();
-
-        // Body Stripes
-        drawStripe(ctx, -5, 5, 4, Math.PI / 4);
-        drawStripe(ctx, 0, 5, 4, 0);
-        drawStripe(ctx, 5, 5, 4, -Math.PI / 4);
-
-        // --- Head ---
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(0, -10, 18, 0, Math.PI * 2); // Big head
-        ctx.fill();
-        ctx.stroke();
-
-        // Ears
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(-12, -22, 6, 0, Math.PI * 2); // Left ear
-        ctx.arc(12, -22, 6, 0, Math.PI * 2);  // Right ear
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#ff7675'; // Pink inside ears
-        ctx.beginPath();
-        ctx.arc(-12, -22, 3, 0, Math.PI * 2);
-        ctx.arc(12, -22, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Head Stripes (Forehead)
-        drawStripe(ctx, 0, -22, 4, Math.PI / 2, 2);
-        drawStripe(ctx, -8, -18, 3, Math.PI / 4, 1.5);
-        drawStripe(ctx, 8, -18, 3, -Math.PI / 4, 1.5);
-
-        // Face
-        // Eyes
-        ctx.fillStyle = '#fdcb6e'; // Golden eyes
-        ctx.beginPath();
-        ctx.arc(-7, -10, 4, 0, Math.PI * 2);
-        ctx.arc(7, -10, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'black'; // Pupils
-        ctx.beginPath();
-        ctx.arc(-7, -10, 2, 0, Math.PI * 2);
-        ctx.arc(7, -10, 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Nose & Mouth
-        ctx.fillStyle = '#ff7675';
-        ctx.beginPath();
-        ctx.arc(0, -4, 2.5, 0, Math.PI * 2); // Nose
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(0, -4);
-        ctx.lineTo(-3, 0);
-        ctx.moveTo(0, -4);
-        ctx.lineTo(3, 0); // Cat mouth
-        ctx.stroke();
-
-        // Cheeks
-        ctx.fillStyle = 'rgba(255, 118, 117, 0.4)';
-        ctx.beginPath();
-        ctx.arc(-12, -5, 3, 0, Math.PI * 2);
-        ctx.arc(12, -5, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // --- Paws ---
-        ctx.fillStyle = '#ffffff';
-        // Hands
-        ctx.beginPath();
-        ctx.arc(-15, 5, 5, 0, Math.PI * 2);
-        ctx.arc(15, 5, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        // Feet (if jumping vs standing)
-        ctx.beginPath();
-        ctx.arc(-10, 20, 6, 0, Math.PI * 2);
-        ctx.arc(10, 20, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // --- Tail ---
-        ctx.strokeStyle = '#2d3436';
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(15, 15);
-        ctx.quadraticCurveTo(25, 20, 25, 10);
-        ctx.stroke();
-        // Tail stripe
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(22, 18);
-        ctx.lineTo(24, 16);
-        ctx.stroke();
+        // Draw Image
+        // If image not loaded yet, fallback to placeholder? (Usually fast enough)
+        if (tigerImg.complete) {
+            ctx.drawImage(tigerImg, -this.width / 2, -this.height / 2, this.width, this.height);
+        } else {
+            // Fallback
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
@@ -244,40 +148,24 @@ class Platform {
         this.x = x;
         this.y = y;
         this.width = PLATFORM_WIDTH;
-        this.height = PLATFORM_HEIGHT;
+        this.height = PLATFORM_HEIGHT * 2.5; // Taller for image aspect ratio
+        this.hitboxHeight = 20; // Only collide with top part
         this.type = Math.random() < 0.1 ? 'moving' : 'normal';
         this.vx = this.type === 'moving' ? (Math.random() < 0.5 ? 2 : -2) : 0;
     }
 
     draw() {
-        // Cloud Drawing
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#74b9ff'; // Light blue outline
-        ctx.lineWidth = 2;
-
-        // Main cloud shape (3 puffy circles)
-        const radius = this.height / 1.5;
-
-        ctx.beginPath();
-        // Left puff
-        ctx.arc(this.x + 10, this.y + 10, 15, 0, Math.PI * 2);
-        // Middle puff (higher)
-        ctx.arc(this.x + this.width / 2, this.y + 5, 20, 0, Math.PI * 2);
-        // Right puff
-        ctx.arc(this.x + this.width - 10, this.y + 10, 15, 0, Math.PI * 2);
-
-        ctx.fill();
-        ctx.stroke();
-
-        // Flatten bottom slightly for visual logic (optional, but circle collision is fine)
-
-        // Moving platform indicator
-        if (this.type === 'moving') {
-            ctx.fillStyle = '#81ecec';
-            ctx.beginPath();
-            ctx.arc(this.x + this.width / 2, this.y + 10, 5, 0, Math.PI * 2);
-            ctx.fill();
+        if (platformImg.complete) {
+            // Draw slightly larger than Hitbox for visual fluff
+            ctx.drawImage(platformImg, this.x - 10, this.y - 10, this.width + 20, this.height);
+        } else {
+            // Fallback
+            ctx.fillStyle = '#dfe6e9';
+            ctx.fillRect(this.x, this.y, this.width, this.hitboxHeight);
         }
+
+        // Moving platform indicator (optional - visual only)
+        // If the platform image itself suggests movement, or we could add sparkles
     }
 
     update() {
@@ -317,51 +205,37 @@ class Particle {
     }
 }
 
-// Background Drawing (Minhwa Style - Sun/Moon/Peaks)
+// Background Drawing
 function drawBackground() {
-    // Sky Gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#0984e3'); // Deep Blue
-    gradient.addColorStop(1, '#74b9ff'); // Light Blue
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (backgroundImg.complete) {
+        // Parallax effect: The background moves slower than the platforms
+        // Since we don't have infinite vertical image, we can tile it or just clamp it
+        // For simplicity, let's just draw it to cover the screen
 
-    // Sun (Red) - Top Right
-    ctx.fillStyle = '#e17055';
-    ctx.beginPath();
-    ctx.arc(canvas.width - 50, 80, 40, 0, Math.PI * 2);
-    ctx.fill();
+        // Option 1: Static background (easiest)
+        // ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-    // Moon (White) - Top Left
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(50, 80, 35, 0, Math.PI * 2);
-    ctx.fill();
+        // Option 2: Scrolling (needs seamless texture)
+        // We moved platforms down by 'score', so we can move scrolling background
+        // Let's assume the background image is tall or seamless.
+        // For now, let's fill the screen, maintaining aspect ratio or covering
 
-    // Mountains (Green Peaks) - Bottom (Parallax)
-    // We can move them down based on score to simulate climbing high
-    const mountainOffset = score * 0.5;
-    if (canvas.height - mountainOffset > 0) {
-        ctx.fillStyle = '#00b894'; // Teal/Green
-        ctx.beginPath();
-        // Peak 1
-        ctx.moveTo(0, canvas.height);
-        ctx.lineTo(100, canvas.height - 150 + mountainOffset);
-        ctx.lineTo(200, canvas.height);
-        // Peak 2 (Center High)
-        ctx.moveTo(150, canvas.height);
-        ctx.lineTo(canvas.width / 2, canvas.height - 250 + mountainOffset);
-        ctx.lineTo(canvas.width - 150, canvas.height);
-        // Peak 3
-        ctx.moveTo(canvas.width - 200, canvas.height);
-        ctx.lineTo(canvas.width - 100, canvas.height - 150 + mountainOffset);
-        ctx.lineTo(canvas.width, canvas.height);
-        ctx.fill();
+        // Just draw it covering the canvas
+        // ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-        // Mountain Outlines
-        ctx.strokeStyle = '#006266';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        // Better: Draw resizing to fill height, center width
+        const scale = Math.max(canvas.width / backgroundImg.width, canvas.height / backgroundImg.height);
+        const x = (canvas.width / 2) - (backgroundImg.width / 2) * scale;
+        const y = (canvas.height / 2) - (backgroundImg.height / 2) * scale;
+        ctx.drawImage(backgroundImg, x, y, backgroundImg.width * scale, backgroundImg.height * scale);
+
+    } else {
+        // Fallback Gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#0984e3'); // Deep Blue
+        gradient.addColorStop(1, '#74b9ff'); // Light Blue
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 }
 
@@ -416,13 +290,13 @@ function update() {
         p.draw();
 
         // Collision Check (Only when falling)
-        // Hitbox usually a bit smaller than sprite
+        // Check against the hitbox (top part of the image)
         if (
             player.vy > 0 &&
             player.x + player.width * 0.7 > p.x &&
             player.x + player.width * 0.3 < p.x + p.width &&
             player.y + player.height * 0.8 > p.y &&
-            player.y + player.height * 0.8 < p.y + p.height + 15
+            player.y + player.height * 0.8 < p.y + p.hitboxHeight + 15
         ) {
             player.jump();
         }
@@ -482,5 +356,7 @@ window.addEventListener('resize', () => {
 // Initial Setup
 canvas.width = window.innerWidth > 480 ? 480 : window.innerWidth;
 canvas.height = window.innerHeight;
-// Draw generic background on load
-drawBackground();
+// Draw generic background on load (wait for image?)
+backgroundImg.onload = () => {
+    if (gameState === 'MENU') drawBackground();
+};
