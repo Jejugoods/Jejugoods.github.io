@@ -621,8 +621,10 @@ function update(timestamp) {
     drawUI();
 
     // Game Over Check
-    if (player.y > canvas.height || gameTimer <= 0) {
-        gameOver();
+    if (player.y > canvas.height) {
+        gameOver('fall');
+    } else if (gameTimer <= 0) {
+        gameOver('timeout');
     } else {
         requestAnimationFrame(update);
     }
@@ -636,9 +638,17 @@ function startGame() {
     requestAnimationFrame(update);
 }
 
-function gameOver() {
+function gameOver(reason) {
     gameState = 'GAMEOVER';
     finalScoreElement.innerText = score;
+
+    const msgElement = document.getElementById('game-over-msg');
+    if (reason === 'timeout') {
+        msgElement.innerText = '시간이 다 됐어요!';
+    } else {
+        msgElement.innerText = '떨어졌어요!';
+    }
+
     gameOverScreen.classList.add('active');
 }
 
