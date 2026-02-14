@@ -131,6 +131,15 @@ button:hover {
     animation: bounce 2s infinite;
 }
 
+#game-over-tiger-img {
+    width: 150px;
+    height: auto;
+    margin-bottom: 20px;
+    filter: sepia(1) hue-rotate(180deg) saturate(2);
+    /* Blue tint for sadness */
+    animation: sad-bounce 3s infinite ease-in-out;
+}
+
 @keyframes bounce {
 
     0%,
@@ -148,6 +157,20 @@ button:hover {
     60% {
         transform: translateY(-10px);
     }
+}
+
+@keyframes sad-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(10px) rotate(-5deg);
+    }
+
+    /* Droopy movement */
 }
 
 /* Mobile responsive */
