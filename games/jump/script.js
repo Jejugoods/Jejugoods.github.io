@@ -448,11 +448,43 @@ function createBurstParticles(x, y, color) {
 // Background Drawing
 function drawBackground() {
     if (backgroundImg.complete) {
-        // Use logical dimensions for scaling/positioning
         const scale = Math.max(gameWidth / backgroundImg.width, gameHeight / backgroundImg.height);
         const x = (gameWidth / 2) - (backgroundImg.width / 2) * scale;
         const y = (gameHeight / 2) - (backgroundImg.height / 2) * scale;
         ctx.drawImage(backgroundImg, x, y, backgroundImg.width * scale, backgroundImg.height * scale);
+
+        // Score-based Background Transition
+        // 0~3000: Day, 3000~7000: Sunset, 7000~15000: Night, 15000+: Space
+        if (score > 3000) {
+            let overlayAlpha = 0;
+            let overlayColor = 'rgba(255, 121, 63, 0)'; // Sunset Orange
+
+            if (score <= 7000) {
+                // Day -> Sunset transition
+                overlayAlpha = (score - 3000) / 4000 * 0.4;
+                overlayColor = `rgba(255, 121, 63, ${overlayAlpha})`;
+            } else if (score <= 15000) {
+                // Sunset -> Night transition
+                // Keep some sunset orange base but add deep blue
+                const nightProgress = (score - 7000) / 8000;
+                overlayAlpha = 0.4 + (nightProgress * 0.4); // max 0.8
+                const r = Math.floor(255 * (1 - nightProgress * 0.8));
+                const g = Math.floor(121 * (1 - nightProgress * 0.8));
+                const b = Math.floor(63 + (150 * nightProgress));
+                overlayColor = `rgba(${r}, ${g}, ${b}, ${overlayAlpha})`;
+
+                // Add stars during night transition
+                drawStars(nightProgress);
+            } else {
+                // Space
+                overlayAlpha = 0.85;
+                overlayColor = 'rgba(10, 10, 40, 0.85)';
+                drawStars(1.0);
+            }
+
+            ctx.fillStyle = overlayColor;
+            ctx.fillRect(0, 0, gameWidth, gameHeight);
+        }
     } else {
         // Fallback Gradient
         const gradient = ctx.createLinearGradient(0, 0, 0, gameHeight);
@@ -460,6 +492,22 @@ function drawBackground() {
         gradient.addColorStop(1, '#74b9ff'); // Light Blue
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, gameWidth, gameHeight);
+    }
+}
+
+// Helper to draw fixed stars for night/space
+function drawStars(intensity) {
+    // We use a pseudo-random seed based on position to keep stars consistent
+    const starCount = Math.floor(50 * intensity);
+    ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`;
+    for (let i = 0; i < starCount; i++) {
+        // Simple deterministic mapping for star positions
+        const sx = (i * 137.5) % gameWidth;
+        const sy = (i * 54.3) % gameHeight;
+        const sSize = (i % 3 === 0) ? 2 : 1;
+        ctx.beginPath();
+        ctx.arc(sx, sy, sSize, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
