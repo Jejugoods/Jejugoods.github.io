@@ -449,9 +449,20 @@ function createBurstParticles(x, y, color) {
 function drawBackground() {
     if (backgroundImg.complete) {
         const scale = Math.max(gameWidth / backgroundImg.width, gameHeight / backgroundImg.height);
-        const x = (gameWidth / 2) - (backgroundImg.width / 2) * scale;
-        const y = (gameHeight / 2) - (backgroundImg.height / 2) * scale;
-        ctx.drawImage(backgroundImg, x, y, backgroundImg.width * scale, backgroundImg.height * scale);
+        const scaledWidth = backgroundImg.width * scale;
+        const scaledHeight = backgroundImg.height * scale;
+
+        const x = (gameWidth / 2) - (scaledWidth / 2);
+
+        // Parallax Scroll Logic:
+        // Start from the bottom of the image (y = gameHeight - scaledHeight)
+        // Scroll down as score increases (reveal the top)
+        // Adjust scroll speed (0.1px per score point)
+        const maxScroll = scaledHeight - gameHeight;
+        const scrollOffset = Math.min(score * 0.1, maxScroll);
+        const y = (gameHeight - scaledHeight) + scrollOffset;
+
+        ctx.drawImage(backgroundImg, x, y, scaledWidth, scaledHeight);
 
         // Score-based Background Transition
         // 0~3000: Day, 3000~7000: Sunset, 7000~15000: Night, 15000+: Space
