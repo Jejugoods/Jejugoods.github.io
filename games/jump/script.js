@@ -132,8 +132,9 @@ class Player {
 
         // Draw Dizzy Effect (Stars over head)
         if (activeEffects.dizzy > 0) {
-            ctx.fillStyle = 'yellow';
-            ctx.fillText('💫', -10, -this.height / 2 - 10);
+            ctx.font = '40px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('💫', 0, -this.height / 2 - 20);
         }
 
         ctx.restore();
