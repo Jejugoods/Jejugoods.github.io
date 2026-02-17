@@ -31,9 +31,8 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 
-// Off-screen canvas for sprite tinting
-const scratchCanvas = document.createElement('canvas');
-const scratchCtx = scratchCanvas.getContext('2d');
+// Off-screen canvas removed for performance
+
 
 // ==================== CONFIGURATION ====================
 let W = 800;
@@ -718,14 +717,9 @@ function drawTiger() {
         const platformOffset = tiger.onPlatform ? 20 : 0;
         const localDrawY = -tiger.h + oy + TIGER_VISUAL_OFFSET_Y + platformOffset;
 
-        // Prepare Off-screen Canvas for Tinting if needed
-        let sourceImg = img;
-        let sX = 0, sY = 0, sW = 0, sH = 0;
-
         // Determine Sprite Frame
         if (isRun24) {
             // Grid: 4 Columns x 6 Rows
-            // Indices: 16, 17, 18, 19, 20, 21, 22, 23
             const runFrames = [16, 17, 18, 19, 20, 21, 22, 23];
             const spriteIdx = runFrames[Math.floor(tiger.animFrame) % 8];
 
@@ -735,66 +729,23 @@ function drawTiger() {
             const fw = img.width / 4;
             const fh = img.height / 6;
 
-            sX = col * fw; sY = row * fh;
-            sW = fw; sH = fh;
+            ctx.drawImage(img, col * fw, row * fh, fw, fh, -tiger.w / 2, localDrawY, tiger.w, tiger.h);
         } else if (is2x2) {
             const fw = img.width / 2;
             const fh = img.height / 2;
             const col = tiger.animFrame % 2;
             const row = Math.floor(tiger.animFrame / 2);
 
-            sX = col * fw; sY = row * fh;
-            sW = fw; sH = fh;
+            ctx.drawImage(img, col * fw, row * fh, fw, fh, -tiger.w / 2, localDrawY, tiger.w, tiger.h);
         } else {
             // Single Frame
-            sX = 0; sY = 0;
-            sW = img.width; sH = img.height;
-        }
-
-        // Apply Tint via Scratch Canvas if Fever Mode
-        if (feverTimer > 0) {
-            scratchCanvas.width = sW;
-            scratchCanvas.height = sH;
-            scratchCtx.clearRect(0, 0, sW, sH);
-
-            // Step 1: Draw the tiger as a solid blue silhouette
-            // This masks the blue color to the tiger's exact shape (alpha channel)
-            scratchCtx.drawImage(img, sX, sY, sW, sH, 0, 0, sW, sH);
-            scratchCtx.globalCompositeOperation = 'source-atop';
-            scratchCtx.fillStyle = 'rgb(0, 0, 255)'; // Opaque Blue
-            scratchCtx.fillRect(0, 0, sW, sH);
-
-            // Step 2: Multiply the original sprite over the blue silhouette
-            // Blue Fur * White Fur = Blue Fur
-            // Blue Fur * Black Stripes = Black Stripes
-            // This restores the tiger's details while keeping it vibrant blue
-            scratchCtx.globalCompositeOperation = 'multiply';
-            scratchCtx.drawImage(img, sX, sY, sW, sH, 0, 0, sW, sH);
-
-            // Reset composite operation for the main canvas use
-            scratchCtx.globalCompositeOperation = 'source-over';
-
-            // Use scratch canvas as source
-            sourceImg = scratchCanvas;
-            sX = 0; sY = 0;
-        }
-
-        // Draw Final Image to Main Canvas
-        if (isRun24 || is2x2) {
-            ctx.drawImage(sourceImg, sX, sY, sW, sH, -tiger.w / 2, localDrawY, tiger.w, tiger.h);
-        } else {
             let dH = tiger.h;
             let dY = localDrawY;
             if (tiger.state === 'slide') {
                 dH = tiger.h * 0.7; // Squish slightly for slide visual if needed
                 dY = (-tiger.h + oy + TIGER_VISUAL_OFFSET_Y + platformOffset); // Adjust alignment
             }
-            ctx.drawImage(sourceImg, sX, sY, sW, sH, -tiger.w / 2, dY, tiger.w, dH);
-        }
-
-        // Add Glow (on main canvas) if in Fever Mode
-        if (feverTimer > 0) {
-            // Optional: logic for outer glow could be here if needed, but source-atop tint should be enough 
+            ctx.drawImage(img, -tiger.w / 2, dY, tiger.w, dH);
         }
 
         ctx.restore();
