@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>백호 달리기 - Tiger Run!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="gameWrapper">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-overlay">
+            <div id="score-display">0</div>
+            <div id="time-display">⏳ 60</div>
+            <div id="meat-count">🍖 0</div>
+            <div id="speed-display">x1.0</div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="overlay-screen">
+            <h1>백호 달리기 🐯</h1>
+            <p class="subtitle">Tiger Run</p>
+            <div class="controls-hint">
+                <div class="control-box">
+                    <div class="key">Space / ⬆️</div>
+                    <div class="label">JUMP</div>
+                </div>
+                <div class="control-box">
+                    <div class="key">⬇️</div>
+                    <div class="label">SLIDE</div>
+                </div>
+            </div>
+            <p style="margin-top: 20px; color: #ffd700;">Click or Press Space to Start</p>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="overlay-screen hidden">
+            <h2>GAME OVER</h2>
+            <div class="final-score" id="final-score">점수: 0</div>
+            <div class="final-score" id="final-meats" style="font-size: 24px;">🍖 0</div>
+            <p class="hint">Click or Press Space to Restart</p>
+        </div>
+
+        <!-- Touch Zones -->
+        <div id="touch-left">
+            <div class="touch-indicator" id="touch-jump-indicator">⬆️</div>
+        </div>
+        <div id="touch-right">
+            <div class="touch-indicator" id="touch-slide-indicator">⬇️</div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+
+</body>
+
+</html>
